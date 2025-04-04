@@ -1,0 +1,552 @@
+{% extends "base.html" %} {% block title %}Dashboard - HealthTracker{% endblock
+%} {% block content %}
+<div class="pt-4 -mt-4">
+  <h1 class="text-3xl font-bold mb-2">Welcome, {{ username }}!</h1>
+  <p class="text-gray-600 mb-8">Here's an overview of your health metrics.</p>
+
+  <!-- Time Range Selector -->
+  <div class="mb-8">
+    <h2 class="text-lg font-semibold mb-3">Time Period</h2>
+    <div class="flex flex-wrap gap-2">
+      <button class="time-range-btn" data-range="week">Last Week</button>
+      <button class="time-range-btn active" data-range="month">
+        Last Month
+      </button>
+      <button class="time-range-btn" data-range="quarter">Last 3 Months</button>
+      <button class="time-range-btn" data-range="year">Last Year</button>
+    </div>
+  </div>
+
+  <!-- Main Dashboard -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+    <!-- Daily Steps Graph -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Daily Steps</h3>
+        <p class="card-subtitle">Physical activity tracking</p>
+      </div>
+      <div class="flex-grow chart-container">
+        <canvas id="stepsChart"></canvas>
+      </div>
+      <div class="flex justify-between items-center mt-4">
+        <div>Goal: <span id="steps-goal">10000</span> steps</div>
+        <div id="steps-average">Avg: 0 steps</div>
+      </div>
+    </div>
+
+    <!-- Daily Calories Graph -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Daily Calories</h3>
+        <p class="card-subtitle">Caloric intake tracking</p>
+      </div>
+      <div class="flex-grow chart-container">
+        <canvas id="caloriesChart"></canvas>
+      </div>
+      <div class="flex justify-between items-center mt-4">
+        <div>Goal: <span id="calories-goal">2000</span> calories</div>
+        <div id="calories-average">Avg: 0 calories</div>
+      </div>
+    </div>
+
+    <!-- Hours of Sleep Graph -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Hours of Sleep</h3>
+        <p class="card-subtitle">Daily sleep duration</p>
+      </div>
+      <div class="flex-grow chart-container">
+        <canvas id="sleepChart"></canvas>
+      </div>
+      <div class="flex justify-between items-center mt-4">
+        <div>Goal: <span id="sleep-goal">8</span> hours</div>
+        <div id="sleep-average">Avg: 0 hrs</div>
+      </div>
+    </div>
+
+    <!-- Water Intake Graph -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Water Intake (L)</h3>
+        <p class="card-subtitle">Daily water consumption</p>
+      </div>
+      <div class="flex-grow chart-container">
+        <canvas id="waterChart"></canvas>
+      </div>
+      <div class="flex justify-between items-center mt-4">
+        <div>Goal: <span id="water-goal">2.5</span> liters</div>
+        <div id="water-average">Avg: 0 L</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Quick Actions</h3>
+    </div>
+    <div class="quick-actions">
+      <a href="{{ url_for('metrics.new_metric') }}" class="btn btn-primary">
+        <i class="bx bx-plus-circle btn-icon"></i>
+        Add Today's Metrics
+      </a>
+      <a href="{{ url_for('metrics.get_metrics') }}" class="btn btn-secondary">
+        <i class="bx bx-list-ul btn-icon"></i>
+        View All Metrics
+      </a>
+      <a href="#" id="export-data" class="btn btn-secondary">
+        <i class="bx bx-download btn-icon"></i>
+        Export Data
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block extra_scripts %}
+<script>
+  var globalChartData = null;
+
+  document.addEventListener("DOMContentLoaded", function () {
+    // Load health goals from localStorage if available
+    loadHealthGoalsFromStorage();
+
+    // Fetch initial data (default: month)
+    fetchDataForRange("month");
+
+    // Handle time range buttons
+    var timeRangeBtns = document.querySelectorAll(".time-range-btn");
+    timeRangeBtns.forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        // Skip for custom range button, as we handle it separately
+        if (this.getAttribute("data-range") === "custom") {
+          return;
+        }
+
+        // Update UI
+        timeRangeBtns.forEach(function (b) {
+          b.classList.remove("active");
+        });
+        this.classList.add("active");
+
+        // Fetch data for the selected range
+        var range = this.getAttribute("data-range");
+        fetchDataForRange(range);
+      });
+    });
+
+    // Export data functionality
+    const exportDataBtn = document.getElementById("export-data");
+    if (exportDataBtn) {
+      exportDataBtn.addEventListener("click", function (e) {
+        e.preventDefault();
+        exportDataToCSV();
+      });
+    }
+  });
+
+  // Load health goals from localStorage
+  function loadHealthGoalsFromStorage() {
+    try {
+      const storedGoals = localStorage.getItem("healthGoals");
+      if (storedGoals) {
+        const goals = JSON.parse(storedGoals);
+
+        // Update goal display elements
+        updateGoalDisplays(goals);
+
+        // Store goals in window for chart creation
+        window.healthGoals = goals;
+      }
+    } catch (e) {
+      console.error("Error loading health goals from localStorage:", e);
+    }
+  }
+
+  // Update goal displays on the page
+  function updateGoalDisplays(goals) {
+    const sleepGoalEl = document.getElementById("sleep-goal");
+    const waterGoalEl = document.getElementById("water-goal");
+    const stepsGoalEl = document.getElementById("steps-goal");
+    const caloriesGoalEl = document.getElementById("calories-goal");
+
+    if (sleepGoalEl && goals.sleep) sleepGoalEl.textContent = goals.sleep;
+    if (waterGoalEl && goals.water) waterGoalEl.textContent = goals.water;
+    if (stepsGoalEl && goals.steps) stepsGoalEl.textContent = goals.steps;
+    if (caloriesGoalEl && goals.calories)
+      caloriesGoalEl.textContent = goals.calories;
+  }
+
+  // Helper function to update charts with goals
+  window.updateChartsWithGoals = function (goals) {
+    if (!globalChartData) return;
+
+    // Update goal displays
+    updateGoalDisplays(goals);
+
+    // Update charts with new goal values
+    updateChartsWithData(globalChartData);
+  };
+
+  function calculateAndDisplayAverages(data) {
+    if (!data) return;
+
+    // Steps average
+    if (data.steps && data.steps.length > 0) {
+      const stepsAvg =
+        data.steps.reduce((sum, val) => sum + val, 0) / data.steps.length;
+      document.getElementById("steps-average").textContent = `Avg: ${Math.round(
+        stepsAvg
+      )} steps`;
+    }
+
+    // Calories average
+    if (data.calories && data.calories.length > 0) {
+      const caloriesAvg =
+        data.calories.reduce((sum, val) => sum + val, 0) / data.calories.length;
+      document.getElementById(
+        "calories-average"
+      ).textContent = `Avg: ${Math.round(caloriesAvg)} calories`;
+    }
+
+    // Sleep average
+    if (data.sleep && data.sleep.length > 0) {
+      const sleepAvg =
+        data.sleep.reduce((sum, val) => sum + val, 0) / data.sleep.length;
+      document.getElementById(
+        "sleep-average"
+      ).textContent = `Avg: ${sleepAvg.toFixed(1)} hrs`;
+    }
+
+    // Water average
+    if (data.water && data.water.length > 0) {
+      const waterAvg =
+        data.water.reduce((sum, val) => sum + val, 0) / data.water.length;
+      document.getElementById(
+        "water-average"
+      ).textContent = `Avg: ${waterAvg.toFixed(1)} L`;
+    }
+  }
+
+  function displayNoDataMessage(canvasId, message) {
+    var canvasElement = document.getElementById(canvasId);
+    if (!canvasElement) {
+      console.error("Canvas element with ID " + canvasId + " not found");
+      return;
+    }
+
+    var container = canvasElement.parentNode;
+
+    // Hide the canvas
+    canvasElement.style.display = "none";
+
+    // Create and append message
+    var messageElem = document.createElement("div");
+    messageElem.className = "text-gray-500 text-center py-10";
+    messageElem.textContent = message;
+    container.appendChild(messageElem);
+  }
+
+  function createChart(
+    canvasId,
+    label,
+    labels,
+    data,
+    backgroundColor,
+    borderColor,
+    defaultGoalValue
+  ) {
+    var canvas = document.getElementById(canvasId);
+    if (!canvas) {
+      console.error("Canvas element with ID " + canvasId + " not found");
+      return;
+    }
+
+    var ctx = canvas.getContext("2d");
+    if (!ctx) {
+      console.error("Could not get 2d context for canvas " + canvasId);
+      return;
+    }
+
+    // Get goal value from localStorage or use default
+    let goalValue = defaultGoalValue;
+
+    // Check if we have goals stored
+    if (window.healthGoals) {
+      switch (canvasId) {
+        case "stepsChart":
+          if (window.healthGoals.steps)
+            goalValue = parseFloat(window.healthGoals.steps);
+          break;
+        case "caloriesChart":
+          if (window.healthGoals.calories)
+            goalValue = parseFloat(window.healthGoals.calories);
+          break;
+        case "sleepChart":
+          if (window.healthGoals.sleep)
+            goalValue = parseFloat(window.healthGoals.sleep);
+          break;
+        case "waterChart":
+          if (window.healthGoals.water)
+            goalValue = parseFloat(window.healthGoals.water);
+          break;
+      }
+    }
+
+    // Define the chart configuration
+    const chartConfig = {
+      type: "line",
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: label,
+            data: data,
+            backgroundColor: backgroundColor,
+            borderColor: borderColor,
+            borderWidth: 2,
+            tension: 0.3,
+            fill: true,
+            pointRadius: 4,
+            pointHoverRadius: 6,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: {
+              color: "rgba(200, 200, 200, 0.1)",
+            },
+            title: {
+              display: true,
+              text: label,
+            },
+          },
+          x: {
+            grid: {
+              color: "rgba(200, 200, 200, 0.1)",
+            },
+            title: {
+              display: true,
+              text: "Date",
+            },
+          },
+        },
+        plugins: {
+          legend: {
+            display: true,
+            position: "top",
+            labels: {
+              boxWidth: 12,
+              usePointStyle: true,
+              pointStyle: "circle",
+            },
+          },
+          tooltip: {
+            enabled: true,
+            mode: "index",
+            intersect: false,
+            backgroundColor: "rgba(255, 255, 255, 0.9)",
+            titleColor: "#333",
+            bodyColor: "#666",
+            borderColor: borderColor,
+            borderWidth: 1,
+            padding: 10,
+            displayColors: true,
+            callbacks: {
+              title: function (tooltipItems) {
+                return tooltipItems[0].label;
+              },
+            },
+          },
+        },
+        interaction: {
+          mode: "nearest",
+          axis: "x",
+          intersect: false,
+        },
+      },
+    };
+
+    // Add goal line annotation
+    chartConfig.options.plugins.annotation = {
+      annotations: {
+        goalLine: {
+          type: "line",
+          yMin: goalValue,
+          yMax: goalValue,
+          borderColor: "rgba(255, 99, 132, 0.8)",
+          borderWidth: 2,
+          borderDash: [6, 4],
+          label: {
+            display: true,
+            content: "Goal",
+            position: "start",
+            backgroundColor: "rgba(255, 99, 132, 0.8)",
+            font: {
+              size: 11,
+            },
+          },
+        },
+      },
+    };
+
+    new Chart(ctx, chartConfig);
+    console.log(
+      "Chart " +
+        canvasId +
+        " created successfully with goal value: " +
+        goalValue
+    );
+  }
+
+  function fetchDataForRange(range) {
+    console.log("Fetching data for range: " + range);
+    fetch("/dashboard/data?range=" + range)
+      .then(function (response) {
+        if (!response.ok) {
+          throw new Error("HTTP error! status: " + response.status);
+        }
+        return response.json();
+      })
+      .then(function (data) {
+        console.log("New data received:", data);
+        if (data && data.dates && data.dates.length > 0) {
+          // Store data globally for later use
+          globalChartData = data;
+
+          // Update charts with new data
+          updateChartsWithData(data);
+          calculateAndDisplayAverages(data);
+        } else {
+          console.warn("Received empty data from server");
+          displayNoDataForAllCharts();
+        }
+      })
+      .catch(function (error) {
+        console.error("Error fetching data:", error);
+        alert("Failed to load data. Please try again later.");
+      });
+  }
+
+  function updateChartsWithData(data) {
+    // Get all chart instances and destroy them
+    var chartIds = ["stepsChart", "caloriesChart", "sleepChart", "waterChart"];
+    chartIds.forEach(function (id) {
+      var canvas = document.getElementById(id);
+      if (canvas) {
+        // Clear any error messages
+        var container = canvas.parentNode;
+        var messages = container.querySelectorAll(".text-gray-500");
+        messages.forEach(function (msg) {
+          container.removeChild(msg);
+        });
+
+        // Show canvas again
+        canvas.style.display = "block";
+
+        // Get chart instance and destroy it
+        var chartInstance = Chart.getChart(canvas);
+        if (chartInstance) {
+          chartInstance.destroy();
+        }
+      }
+    });
+
+    // Create new charts with the updated data and goal lines from localStorage
+    createChart(
+      "stepsChart",
+      "Steps",
+      data.dates,
+      data.steps,
+      "rgba(54, 162, 235, 0.2)",
+      "rgba(54, 162, 235, 1)",
+      10000
+    );
+
+    createChart(
+      "caloriesChart",
+      "Calories",
+      data.dates,
+      data.calories,
+      "rgba(255, 99, 132, 0.2)",
+      "rgba(255, 99, 132, 1)",
+      2000
+    );
+
+    createChart(
+      "sleepChart",
+      "Hours",
+      data.dates,
+      data.sleep,
+      "rgba(75, 192, 192, 0.2)",
+      "rgba(75, 192, 192, 1)",
+      8
+    );
+
+    createChart(
+      "waterChart",
+      "Liters",
+      data.dates,
+      data.water,
+      "rgba(153, 102, 255, 0.2)",
+      "rgba(153, 102, 255, 1)",
+      2.5
+    );
+  }
+
+  function displayNoDataForAllCharts(message = null) {
+    displayNoDataMessage(
+      "stepsChart",
+      message || "No step data available for this time range"
+    );
+    displayNoDataMessage(
+      "caloriesChart",
+      message || "No calorie data available for this time range"
+    );
+    displayNoDataMessage(
+      "sleepChart",
+      message || "No sleep data available for this time range"
+    );
+    displayNoDataMessage(
+      "waterChart",
+      message || "No water intake data available for this time range"
+    );
+  }
+
+  function exportDataToCSV() {
+    if (!globalChartData || !globalChartData.dates) {
+      alert("No data available to export");
+      return;
+    }
+
+    // Create CSV content
+    let csvContent = "data:text/csv;charset=utf-8,";
+    csvContent += "Date,Steps,Calories,Sleep,Water\n";
+
+    for (let i = 0; i < globalChartData.dates.length; i++) {
+      const row = [
+        globalChartData.dates[i],
+        globalChartData.steps[i] || "",
+        globalChartData.calories[i] || "",
+        globalChartData.sleep[i] || "",
+        globalChartData.water[i] || "",
+      ].join(",");
+      csvContent += row + "\n";
+    }
+
+    // Create download link
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "health_data.csv");
+    document.body.appendChild(link);
+
+    // Trigger download
+    link.click();
+    document.body.removeChild(link);
+  }
+</script>
+{% endblock %}

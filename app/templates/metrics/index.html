@@ -1,0 +1,734 @@
+{% extends "base.html" %} {% block title %}My Health Dashboard - HealthTracker{%
+endblock %} {% block content %}
+<div class="flex flex-col mb-6">
+  <h1
+    class="text-3xl font-bold text-gray-800 dark:text-gray-100 flex items-center"
+  >
+    <span class="mr-2">📊</span> My Health Dashboard
+  </h1>
+  <p class="text-gray-600 dark:text-gray-400 mb-4">
+    Your daily health journey at a glance.
+  </p>
+  <a
+    href="{{ url_for('metrics.new_metric') }}"
+    class="bg-primary-green hover:bg-dark-green text-white font-bold py-2 px-4 rounded-lg transition flex items-center w-fit"
+  >
+    <span class="mr-1">+</span> Add New Entry
+  </a>
+</div>
+
+<!-- Filter Section -->
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6 transition">
+  <div class="flex items-center justify-between mb-4">
+    <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-300">
+      <i class="bx bx-filter mr-2"></i>Filter Records
+    </h3>
+    <button
+      id="toggle-filters"
+      class="text-primary-green hover:text-dark-green dark:text-green-400 dark:hover:text-green-300 text-sm"
+    >
+      <i class="bx bx-chevron-down"></i> <span>Expand</span>
+    </button>
+  </div>
+
+  <div id="filter-content" class="hidden">
+    <form
+      method="GET"
+      action="{{ url_for('metrics.get_metrics') }}"
+      class="flex flex-col space-y-4"
+    >
+      <!-- Date Range Section -->
+      <div class="filter-section">
+        <h4 class="text-md font-medium text-gray-700 dark:text-gray-300 mb-2">
+          Date Range
+        </h4>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
+          <div class="flex flex-col">
+            <label
+              for="start_date"
+              class="text-sm text-gray-600 dark:text-gray-400 mb-1"
+            >
+              Start Date
+            </label>
+            <input
+              type="date"
+              id="start_date"
+              name="start_date"
+              value="{{ request.args.get('start_date', '') }}"
+              class="border rounded-lg px-3 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+            />
+          </div>
+          <div class="flex flex-col">
+            <label
+              for="end_date"
+              class="text-sm text-gray-600 dark:text-gray-400 mb-1"
+            >
+              End Date
+            </label>
+            <input
+              type="date"
+              id="end_date"
+              name="end_date"
+              value="{{ request.args.get('end_date', '') }}"
+              class="border rounded-lg px-3 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+            />
+          </div>
+          <div class="time-range-container flex items-end space-x-2">
+            <button
+              type="button"
+              class="time-range-btn px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300 rounded-lg"
+              data-days="7"
+            >
+              This Week
+            </button>
+            <button
+              type="button"
+              class="time-range-btn px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300 rounded-lg"
+              data-days="30"
+            >
+              Last 30 Days
+            </button>
+            <button
+              type="button"
+              class="time-range-btn px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300 rounded-lg"
+              data-month="current"
+            >
+              This Month
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Metric Filters Section -->
+      <div class="filter-section">
+        <h4 class="text-md font-medium text-gray-700 dark:text-gray-300 mb-2">
+          Metric Filters
+        </h4>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="flex items-center">
+            <input
+              type="checkbox"
+              id="high_calories"
+              name="high_calories"
+              value="true"
+              class="mr-2"
+            />
+            <label
+              for="high_calories"
+              class="text-sm text-gray-600 dark:text-gray-400"
+              >High Calories</label
+            >
+          </div>
+          <div class="flex items-center">
+            <input
+              type="checkbox"
+              id="low_steps"
+              name="low_steps"
+              value="true"
+              class="mr-2"
+            />
+            <label
+              for="low_steps"
+              class="text-sm text-gray-600 dark:text-gray-400"
+              >Low Steps</label
+            >
+          </div>
+          <div class="flex items-center">
+            <input
+              type="checkbox"
+              id="low_sleep"
+              name="low_sleep"
+              value="true"
+              class="mr-2"
+            />
+            <label
+              for="low_sleep"
+              class="text-sm text-gray-600 dark:text-gray-400"
+              >Sleep &lt; 6h</label
+            >
+          </div>
+          <div class="flex items-center">
+            <input
+              type="checkbox"
+              id="high_hr"
+              name="high_hr"
+              value="true"
+              class="mr-2"
+            />
+            <label
+              for="high_hr"
+              class="text-sm text-gray-600 dark:text-gray-400"
+              >HR Spikes (&gt;100)</label
+            >
+          </div>
+          <div class="flex items-center">
+            <input
+              type="checkbox"
+              id="incomplete"
+              name="incomplete"
+              value="true"
+              class="mr-2"
+            />
+            <label
+              for="incomplete"
+              class="text-sm text-gray-600 dark:text-gray-400"
+              >Incomplete Entries</label
+            >
+          </div>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap gap-3 justify-end">
+        <button
+          type="button"
+          id="reset-filters"
+          class="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 font-medium py-2 px-4 rounded-lg transition flex items-center"
+        >
+          <i class="bx bx-refresh mr-2"></i> Reset Filters
+        </button>
+        <button
+          type="submit"
+          class="bg-primary-green hover:bg-dark-green text-white font-bold py-2 px-4 rounded-lg transition"
+        >
+          Apply Filters
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Summary Panel -->
+{% if metrics %}
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
+  <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-4">
+    Health Summary
+  </h3>
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="flex flex-col border-l-4 border-green-500 pl-3 py-2">
+      <span class="text-xs text-gray-500 dark:text-gray-400"
+        >Best Step Day</span
+      >
+      <span class="text-xl font-bold text-gray-800 dark:text-gray-100">
+        {% set max_steps = metrics|map(attribute='steps')|list|max %} {% set
+        max_steps_entry = metrics|selectattr('steps', 'eq', max_steps)|first %}
+        {{ "{:,}".format(max_steps) }} on {{
+        max_steps_entry.date_logged.strftime('%b %d') }}
+      </span>
+    </div>
+
+    <div class="flex flex-col border-l-4 border-blue-500 pl-3 py-2">
+      <span class="text-xs text-gray-500 dark:text-gray-400"
+        >Avg Sleep (last 7 days)</span
+      >
+      <span class="text-xl font-bold text-gray-800 dark:text-gray-100">
+        {% set recent_entries = metrics[:7] %} {% set sleep_values =
+        recent_entries|map(attribute='hours_sleep')|list %} {% if sleep_values
+        %} {{ "%.1f" % (sleep_values|sum / sleep_values|length) }} hrs {% else
+        %} N/A {% endif %}
+      </span>
+    </div>
+
+    <div class="flex flex-col border-l-4 border-red-500 pl-3 py-2">
+      <span class="text-xs text-gray-500 dark:text-gray-400"
+        >Highest Heart Rate</span
+      >
+      <span class="text-xl font-bold text-gray-800 dark:text-gray-100">
+        {% set max_hr = metrics|map(attribute='heart_rate')|list|max %} {{
+        max_hr }} bpm
+      </span>
+    </div>
+
+    <div class="flex flex-col border-l-4 border-yellow-500 pl-3 py-2">
+      <span class="text-xs text-gray-500 dark:text-gray-400"
+        >Incomplete Entries</span
+      >
+      <span class="text-xl font-bold text-gray-800 dark:text-gray-100">
+        {% set incomplete_count = metrics|selectattr('heart_rate', 'eq',
+        0)|list|count %} {{ incomplete_count }} missing
+      </span>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Metrics Table/Cards -->
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
+  {% if metrics %}
+  <!-- Desktop Table View -->
+  <div class="hidden md:block overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+      <thead class="bg-gray-50 dark:bg-gray-700 sticky top-0">
+        <tr>
+          <th
+            class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+          >
+            <span class="flex items-center">
+              <i class="bx bx-calendar text-lg mr-2"></i> Date
+            </span>
+          </th>
+          <th
+            class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+          >
+            <span class="flex items-center">
+              <i class="bx bx-walk text-lg mr-2"></i> Steps
+            </span>
+          </th>
+          <th
+            class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+          >
+            <span class="flex items-center">
+              <i class="bx bx-flame text-lg mr-2"></i> Calories
+            </span>
+          </th>
+          <th
+            class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+          >
+            <span class="flex items-center">
+              <i class="bx bx-droplet text-lg mr-2"></i> Water (L)
+            </span>
+          </th>
+          <th
+            class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+          >
+            <span class="flex items-center">
+              <i class="bx bx-bed text-lg mr-2"></i> Sleep (hrs)
+            </span>
+          </th>
+          <th
+            class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+          >
+            <span class="flex items-center">
+              <i class="bx bx-heart-pulse text-lg mr-2"></i> HR
+            </span>
+          </th>
+          <th
+            class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+          >
+            Actions
+          </th>
+        </tr>
+      </thead>
+      <tbody
+        class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700"
+      >
+        {% for metric in metrics %}
+        <tr
+          class="{% if loop.index % 2 == 0 %}bg-gray-50 dark:bg-gray-700{% endif %} hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+        >
+          <td
+            class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100"
+          >
+            {{ metric.date_logged.strftime('%Y-%m-%d') }}
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm relative">
+            <span id="steps-value-{{ metric.metric_id }}" class="font-medium">
+              {{ "{:,}".format(metric.steps) }}
+            </span>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm relative">
+            <span
+              id="calories-value-{{ metric.metric_id }}"
+              class="font-medium"
+            >
+              {{ "{:,}".format(metric.calories) }}
+            </span>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm relative">
+            <span id="water-value-{{ metric.metric_id }}" class="font-medium">
+              {{ "%.1f" % metric.water_intake }}
+            </span>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm relative">
+            <span id="sleep-value-{{ metric.metric_id }}" class="font-medium">
+              {{ "%.1f" % metric.hours_sleep }}
+            </span>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm">
+            <span
+              class="{% if metric.heart_rate == 0 %}text-gray-400 dark:text-gray-500{% elif metric.heart_rate > 100 %}text-red-600 dark:text-red-400{% elif metric.heart_rate < 60 %}text-yellow-600 dark:text-yellow-400{% else %}text-gray-900 dark:text-gray-100{% endif %} font-medium"
+            >
+              {{ metric.heart_rate }}
+            </span>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+            <a
+              href="{{ url_for('metrics.edit_metric', metric_id=metric.metric_id) }}"
+              class="text-primary-green hover:text-dark-green dark:text-green-400 dark:hover:text-green-300 mr-3"
+              title="Edit Record"
+            >
+              <i class="bx bx-edit text-lg"></i>
+            </a>
+            <form
+              method="POST"
+              action="{{ url_for('metrics.delete_metric', metric_id=metric.metric_id) }}"
+              class="inline"
+            >
+              <button
+                type="submit"
+                class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                title="Delete Record"
+                onclick="return confirm('Are you sure you want to delete this record?')"
+              >
+                <i class="bx bx-trash text-lg"></i>
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Mobile Card View -->
+  <div class="md:hidden">
+    {% for metric in metrics %}
+    <div class="border-b border-gray-200 dark:border-gray-700 p-4">
+      <div class="flex justify-between items-center mb-2">
+        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">
+          <i class="bx bx-calendar mr-1"></i> {{ metric.date_logged.strftime('%b
+          %d, %Y') }}
+        </h3>
+        <div class="flex space-x-2">
+          <a
+            href="{{ url_for('metrics.edit_metric', metric_id=metric.metric_id) }}"
+            class="text-primary-green hover:text-dark-green dark:text-green-400 dark:hover:text-green-300"
+            title="Edit Record"
+          >
+            <i class="bx bx-edit text-lg"></i>
+          </a>
+          <form
+            method="POST"
+            action="{{ url_for('metrics.delete_metric', metric_id=metric.metric_id) }}"
+            class="inline"
+          >
+            <button
+              type="submit"
+              class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+              title="Delete Record"
+              onclick="return confirm('Are you sure you want to delete this record?')"
+            >
+              <i class="bx bx-trash text-lg"></i>
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-y-2">
+        <div class="flex items-center">
+          <i
+            class="bx bx-walk text-lg mr-2 text-gray-500 dark:text-gray-400"
+          ></i>
+          <span id="steps-mobile-{{ metric.metric_id }}" class="font-medium">
+            {{ "{:,}".format(metric.steps) }} steps
+          </span>
+        </div>
+        <div class="flex items-center">
+          <i
+            class="bx bx-flame text-lg mr-2 text-gray-500 dark:text-gray-400"
+          ></i>
+          <span id="calories-mobile-{{ metric.metric_id }}" class="font-medium">
+            {{ "{:,}".format(metric.calories) }} cal
+          </span>
+        </div>
+        <div class="flex items-center">
+          <i
+            class="bx bx-droplet text-lg mr-2 text-gray-500 dark:text-gray-400"
+          ></i>
+          <span id="water-mobile-{{ metric.metric_id }}" class="font-medium">
+            {{ "%.1f" % metric.water_intake }} L
+          </span>
+        </div>
+        <div class="flex items-center">
+          <i
+            class="bx bx-bed text-lg mr-2 text-gray-500 dark:text-gray-400"
+          ></i>
+          <span id="sleep-mobile-{{ metric.metric_id }}" class="font-medium">
+            {{ "%.1f" % metric.hours_sleep }} hrs
+          </span>
+        </div>
+        <div class="flex items-center">
+          <i
+            class="bx bx-heart-pulse text-lg mr-2 text-gray-500 dark:text-gray-400"
+          ></i>
+          <span
+            class="{% if metric.heart_rate == 0 %}text-gray-400 dark:text-gray-500{% elif metric.heart_rate > 100 %}text-red-600 dark:text-red-400{% elif metric.heart_rate < 60 %}text-yellow-600 dark:text-yellow-400{% else %}text-gray-900 dark:text-gray-100{% endif %} font-medium"
+          >
+            {{ metric.heart_rate }} bpm
+          </span>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Pagination if needed -->
+  {% if metrics|length > 10 %}
+  <div
+    class="px-6 py-4 bg-gray-50 dark:bg-gray-700 border-t border-gray-200 dark:border-gray-700"
+  >
+    <div class="flex justify-between items-center">
+      <div class="text-sm text-gray-600 dark:text-gray-400">
+        Showing {{ metrics|length }} entries
+      </div>
+      <div>
+        <!-- More complete pagination could be added here -->
+        <button
+          class="px-3 py-1 bg-gray-200 dark:bg-gray-600 rounded-lg text-sm mr-2 hover:bg-gray-300 dark:hover:bg-gray-500 dark:text-gray-200"
+        >
+          Previous
+        </button>
+        <button
+          class="px-3 py-1 bg-primary-green text-white rounded-lg text-sm mr-2"
+        >
+          1
+        </button>
+        <button
+          class="px-3 py-1 bg-gray-200 dark:bg-gray-600 rounded-lg text-sm mr-2 hover:bg-gray-300 dark:hover:bg-gray-500 dark:text-gray-200"
+        >
+          2
+        </button>
+        <button
+          class="px-3 py-1 bg-gray-200 dark:bg-gray-600 rounded-lg text-sm hover:bg-gray-300 dark:hover:bg-gray-500 dark:text-gray-200"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  </div>
+  {% endif %} {% else %}
+  <div class="p-8 text-center">
+    <p class="text-gray-500 dark:text-gray-400 mb-4">
+      No health metrics found. Start tracking your health journey today!
+    </p>
+    <a
+      href="{{ url_for('metrics.new_metric') }}"
+      class="inline-block bg-primary-green hover:bg-dark-green text-white font-bold py-2 px-4 rounded-lg transition"
+    >
+      <span class="mr-1">+</span> Add First Entry
+    </a>
+  </div>
+  {% endif %}
+</div>
+
+{% if metrics|length > 0 %}
+<!-- Export Options -->
+<div class="mt-6 flex justify-end">
+  <a
+    href="#"
+    class="text-primary-green hover:text-dark-green dark:text-green-400 dark:hover:text-green-300 mr-4 flex items-center"
+  >
+    <i class="bx bx-download mr-2"></i> Export to CSV
+  </a>
+  <a
+    href="#"
+    class="text-primary-green hover:text-dark-green dark:text-green-400 dark:hover:text-green-300 flex items-center"
+  >
+    <i class="bx bx-printer mr-2"></i> Print Records
+  </a>
+</div>
+{% endif %}
+
+<!-- Add goals-based visualization script -->
+<script>
+  // Safe way to initialize metric data
+  var metricData = {% if metrics %}[
+    {% for metric in metrics %}
+    {
+      "id": {{ metric.metric_id }},
+      "steps": {{ metric.steps }},
+      "calories": {{ metric.calories }},
+      "water": {{ metric.water_intake }},
+      "sleep": {{ metric.hours_sleep }}
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ]{% else %}[]{% endif %};
+
+  document.addEventListener('DOMContentLoaded', function() {
+    // Toggle filters
+    const toggleFilters = document.getElementById("toggle-filters");
+    const filterContent = document.getElementById("filter-content");
+
+    if (toggleFilters && filterContent) {
+      toggleFilters.addEventListener("click", function () {
+        filterContent.classList.toggle("hidden");
+        const span = toggleFilters.querySelector("span");
+        const icon = toggleFilters.querySelector("i");
+
+        if (filterContent.classList.contains("hidden")) {
+          span.textContent = "Expand";
+          icon.classList.replace("bx-chevron-up", "bx-chevron-down");
+        } else {
+          span.textContent = "Collapse";
+          icon.classList.replace("bx-chevron-down", "bx-chevron-up");
+        }
+      });
+    }
+
+    // Reset filters
+    const resetBtn = document.getElementById("reset-filters");
+    if (resetBtn) {
+      resetBtn.addEventListener("click", function () {
+        document.getElementById("start_date").value = "";
+        document.getElementById("end_date").value = "";
+
+        // Reset checkboxes
+        const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach((checkbox) => {
+          checkbox.checked = false;
+        });
+      });
+    }
+
+    // Time range preset buttons
+    const timeRangeBtns = document.querySelectorAll(".time-range-btn");
+    timeRangeBtns.forEach((btn) => {
+      btn.addEventListener("click", function () {
+        const now = new Date();
+        let startDate = new Date();
+
+        if (this.dataset.days) {
+          startDate.setDate(now.getDate() - parseInt(this.dataset.days));
+        } else if (this.dataset.month === "current") {
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        }
+
+        document.getElementById("start_date").value = startDate
+          .toISOString()
+          .split("T")[0];
+        document.getElementById("end_date").value = now
+          .toISOString()
+          .split("T")[0];
+      });
+    });
+
+    // Apply goal-based visualization
+    applyGoalVisualization();
+  });
+
+  // Function to apply goal-based visualization
+  function applyGoalVisualization() {
+    // Get user's goals from localStorage
+    const storedGoals = localStorage.getItem('healthGoals');
+    if (!storedGoals || metricData.length === 0) return;
+
+    try {
+      const goals = JSON.parse(storedGoals);
+
+      // Process each metric
+      metricData.forEach(function(metric) {
+        // Desktop view
+        const stepsValue = document.getElementById(`steps-value-${metric.id}`);
+        const caloriesValue = document.getElementById(`calories-value-${metric.id}`);
+        const waterValue = document.getElementById(`water-value-${metric.id}`);
+        const sleepValue = document.getElementById(`sleep-value-${metric.id}`);
+
+        // Mobile view
+        const stepsMobile = document.getElementById(`steps-mobile-${metric.id}`);
+        const caloriesMobile = document.getElementById(`calories-mobile-${metric.id}`);
+        const waterMobile = document.getElementById(`water-mobile-${metric.id}`);
+        const sleepMobile = document.getElementById(`sleep-mobile-${metric.id}`);
+
+        // Apply color coding based on goals - Add null checks
+        if (stepsValue) applyColorCoding(stepsValue, metric.steps, goals.steps, 'min');
+        if (stepsMobile) applyColorCoding(stepsMobile, metric.steps, goals.steps, 'min');
+
+        if (caloriesValue) applyColorCoding(caloriesValue, metric.calories, goals.calories, 'max');
+        if (caloriesMobile) applyColorCoding(caloriesMobile, metric.calories, goals.calories, 'max');
+
+        if (waterValue) applyColorCoding(waterValue, metric.water, goals.water, 'min');
+        if (waterMobile) applyColorCoding(waterMobile, metric.water, goals.water, 'min');
+
+        if (sleepValue) applyColorCoding(sleepValue, metric.sleep, goals.sleep, 'min');
+        if (sleepMobile) applyColorCoding(sleepMobile, metric.sleep, goals.sleep, 'min');
+
+        // Add tooltips with null checks
+        if (stepsValue) addMetricTooltip(stepsValue, metric.steps, goals.steps, 'Steps', 'min');
+        if (caloriesValue) addMetricTooltip(caloriesValue, metric.calories, goals.calories, 'Calories', 'max');
+        if (waterValue) addMetricTooltip(waterValue, metric.water, goals.water, 'Water', 'min');
+        if (sleepValue) addMetricTooltip(sleepValue, metric.sleep, goals.sleep, 'Sleep', 'min');
+      });
+    } catch (e) {
+      console.error('Error applying goals visualization:', e);
+    }
+  }
+
+  // Helper function to apply color coding based on goals
+  function applyColorCoding(element, value, goal, type) {
+    if (!element) return;
+
+    // Make sure value and goal are numbers
+    value = parseFloat(value) || 0;
+    goal = parseFloat(goal) || 0;
+
+    if (value === 0) {
+      element.classList.add('text-red-500');
+      return;
+    }
+
+    if (type === 'min') {
+      // For metrics where higher is better (steps, sleep, water)
+      if (value >= goal) {
+        element.classList.add('text-green-500', 'dark:text-green-400');
+        // Optionally add a checkmark icon for values meeting goals
+        const checkMark = document.createElement('i');
+        checkMark.className = 'bx bx-check text-green-500 dark:text-green-400 ml-1';
+        element.appendChild(checkMark);
+      } else if (value < goal && value > goal * 0.6) {
+        element.classList.add('text-yellow-500', 'dark:text-yellow-400');
+      } else {
+        element.classList.add('text-red-500', 'dark:text-red-400');
+      }
+    } else if (type === 'max') {
+      // For metrics where lower is better (calories)
+      if (value <= goal) {
+        element.classList.add('text-green-500', 'dark:text-green-400');
+        // Optionally add a checkmark icon for values meeting goals
+        const checkMark = document.createElement('i');
+        checkMark.className = 'bx bx-check text-green-500 dark:text-green-400 ml-1';
+        element.appendChild(checkMark);
+      } else if (value > goal && value < goal * 1.2) {
+        element.classList.add('text-yellow-500', 'dark:text-yellow-400');
+      } else {
+        element.classList.add('text-red-500', 'dark:text-red-400');
+      }
+    }
+  }
+
+  // Helper function to add tooltips
+  function addMetricTooltip(element, value, goal, metricName, type) {
+    if (!element) return;
+
+    // Make sure value and goal are numbers
+    value = parseFloat(value) || 0;
+    goal = parseFloat(goal) || 0;
+
+    element.classList.add('relative', 'group');
+
+    const tooltip = document.createElement('div');
+    tooltip.className = 'absolute hidden group-hover:block bg-gray-800 text-white p-2 text-xs rounded shadow-lg -top-10 left-1/2 transform -translate-x-1/2 z-10 whitespace-nowrap';
+
+    if (value === 0) {
+      tooltip.textContent = `Missing ${metricName} data`;
+    } else if (type === 'min') {
+      if (value >= goal) {
+        tooltip.textContent = `Goal met: ${value} / ${goal} ${metricName}`;
+        tooltip.classList.add('bg-green-700');
+      } else {
+        tooltip.textContent = `Below goal: ${value} / ${goal} ${metricName}`;
+        tooltip.classList.add('bg-yellow-700');
+      }
+    } else if (type === 'max') {
+      if (value <= goal) {
+        tooltip.textContent = `Within limit: ${value} / ${goal} ${metricName}`;
+        tooltip.classList.add('bg-green-700');
+      } else {
+        tooltip.textContent = `Over limit: ${value} / ${goal} ${metricName}`;
+        tooltip.classList.add('bg-yellow-700');
+      }
+    }
+
+    element.appendChild(tooltip);
+  }
+</script>
+
+{% endblock %}

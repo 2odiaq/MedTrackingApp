@@ -1,0 +1,548 @@
+{% extends "base.html" %} {% block title %}Edit Health Metric - HealthTracker{%
+endblock %} {% block content %}
+<div class="mb-6">
+  <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100">
+    Edit Health Metric
+  </h1>
+  <p class="text-gray-600 dark:text-gray-300">
+    Update your health data for {{ metric.date_logged.strftime('%Y-%m-%d') }}.
+  </p>
+</div>
+
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
+  <form
+    method="POST"
+    action="{{ url_for('metrics.edit_metric', metric_id=metric.metric_id) }}"
+    class="p-6"
+  >
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+      <!-- Date -->
+      <div
+        class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg transition-all hover:shadow-md"
+      >
+        <label
+          for="date_logged"
+          class="block text-gray-700 dark:text-gray-200 font-bold mb-2 flex items-center"
+        >
+          <i class="bx bx-calendar text-primary-green text-xl mr-2"></i>
+          Date
+        </label>
+        <div class="relative">
+          <input
+            type="date"
+            name="date_logged"
+            id="date_logged"
+            value="{{ metric.date_logged.strftime('%Y-%m-%d') }}"
+            disabled
+            class="shadow-sm appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 dark:text-gray-200 dark:bg-gray-800 dark:border-gray-600 leading-tight focus:outline-none focus:ring-2 focus:ring-primary-green focus:border-transparent bg-gray-100 dark:bg-gray-600"
+          />
+          <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            Date cannot be changed. Please create a new entry for a different
+            date.
+          </div>
+        </div>
+      </div>
+
+      <!-- Calories -->
+      <div
+        class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg transition-all hover:shadow-md"
+      >
+        <label
+          for="calories"
+          class="block text-gray-700 dark:text-gray-200 font-bold mb-2 flex items-center"
+        >
+          <i class="bx bx-flame text-red-500 text-xl mr-2"></i>
+          Calories Consumed
+        </label>
+        <div class="relative">
+          <input
+            type="number"
+            name="calories"
+            id="calories"
+            min="0"
+            max="5000"
+            value="{{ metric.calories }}"
+            required
+            class="shadow-sm appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 dark:text-gray-200 dark:bg-gray-800 dark:border-gray-600 leading-tight focus:outline-none focus:ring-2 focus:ring-primary-green focus:border-transparent"
+          />
+          <div class="mt-2">
+            <input
+              type="range"
+              id="calories-slider"
+              min="0"
+              max="5000"
+              step="50"
+              value="{{ metric.calories }}"
+              class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+            />
+          </div>
+          <div
+            class="text-xs flex justify-between text-gray-500 dark:text-gray-400 mt-1"
+          >
+            <span>0</span>
+            <span id="calories-goal" class="text-primary-green"></span>
+            <span>5000</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Water Intake -->
+      <div
+        class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg transition-all hover:shadow-md"
+      >
+        <label
+          for="water_intake"
+          class="block text-gray-700 dark:text-gray-200 font-bold mb-2 flex items-center"
+        >
+          <i class="bx bx-droplet text-blue-500 text-xl mr-2"></i>
+          Water Intake (Liters)
+        </label>
+        <div class="relative">
+          <input
+            type="number"
+            name="water_intake"
+            id="water_intake"
+            min="0"
+            max="5"
+            step="0.1"
+            value="{{ metric.water_intake }}"
+            required
+            class="shadow-sm appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 dark:text-gray-200 dark:bg-gray-800 dark:border-gray-600 leading-tight focus:outline-none focus:ring-2 focus:ring-primary-green focus:border-transparent"
+          />
+          <div class="mt-2 relative">
+            <div
+              id="water-progress-bg"
+              class="w-full h-2 bg-gray-200 rounded-lg dark:bg-gray-700"
+            ></div>
+            <div
+              id="water-progress"
+              class="absolute top-0 left-0 h-2 bg-blue-500 rounded-lg transition-all duration-300"
+              style="width: {{ (metric.water_intake / 5) * 100 }}%"
+            ></div>
+            <input
+              type="range"
+              id="water-slider"
+              min="0"
+              max="5"
+              step="0.1"
+              value="{{ metric.water_intake }}"
+              class="w-full h-2 absolute top-0 left-0 opacity-0 cursor-pointer"
+            />
+          </div>
+          <div
+            class="text-xs flex justify-between text-gray-500 dark:text-gray-400 mt-1"
+          >
+            <span>0L</span>
+            <span id="water-goal" class="text-primary-green"></span>
+            <span>5L</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Steps -->
+      <div
+        class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg transition-all hover:shadow-md"
+      >
+        <label
+          for="steps"
+          class="block text-gray-700 dark:text-gray-200 font-bold mb-2 flex items-center"
+        >
+          <i class="bx bx-walk text-green-500 text-xl mr-2"></i>
+          Steps Taken
+        </label>
+        <div class="relative">
+          <input
+            type="number"
+            name="steps"
+            id="steps"
+            min="0"
+            max="30000"
+            value="{{ metric.steps }}"
+            required
+            class="shadow-sm appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 dark:text-gray-200 dark:bg-gray-800 dark:border-gray-600 leading-tight focus:outline-none focus:ring-2 focus:ring-primary-green focus:border-transparent"
+          />
+          <div
+            id="step-goal-indicator"
+            class="text-xs text-gray-500 dark:text-gray-400 mt-1"
+          >
+            <span id="steps-percentage"></span>
+          </div>
+          <div class="mt-2">
+            <input
+              type="range"
+              id="steps-slider"
+              min="0"
+              max="30000"
+              step="100"
+              value="{{ metric.steps }}"
+              class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+            />
+          </div>
+          <div
+            class="text-xs flex justify-between text-gray-500 dark:text-gray-400 mt-1"
+          >
+            <span>0</span>
+            <span id="steps-goal" class="text-primary-green"></span>
+            <span>30K</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sleep -->
+      <div
+        class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg transition-all hover:shadow-md"
+      >
+        <label
+          for="hours_sleep"
+          class="block text-gray-700 dark:text-gray-200 font-bold mb-2 flex items-center"
+        >
+          <i class="bx bx-bed text-indigo-500 text-xl mr-2"></i>
+          Hours of Sleep
+        </label>
+        <div class="relative">
+          <input
+            type="number"
+            name="hours_sleep"
+            id="hours_sleep"
+            min="0"
+            max="12"
+            step="0.1"
+            value="{{ metric.hours_sleep }}"
+            required
+            class="shadow-sm appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 dark:text-gray-200 dark:bg-gray-800 dark:border-gray-600 leading-tight focus:outline-none focus:ring-2 focus:ring-primary-green focus:border-transparent"
+          />
+          <div id="sleep-feedback" class="text-xs mt-1 font-medium"></div>
+          <div class="mt-2">
+            <input
+              type="range"
+              id="sleep-slider"
+              min="0"
+              max="12"
+              step="0.5"
+              value="{{ metric.hours_sleep }}"
+              class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+            />
+          </div>
+          <div
+            class="text-xs flex justify-between text-gray-500 dark:text-gray-400 mt-1"
+          >
+            <span>0h</span>
+            <span id="sleep-goal" class="text-primary-green"></span>
+            <span>12h</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Heart Rate -->
+      <div
+        class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg transition-all hover:shadow-md"
+      >
+        <label
+          for="heart_rate"
+          class="block text-gray-700 dark:text-gray-200 font-bold mb-2 flex items-center"
+        >
+          <i class="bx bx-heart-pulse text-red-500 text-xl mr-2"></i>
+          Heart Rate (bpm)
+        </label>
+        <div class="relative">
+          <input
+            type="number"
+            name="heart_rate"
+            id="heart_rate"
+            min="0"
+            max="220"
+            value="{{ metric.heart_rate }}"
+            required
+            class="shadow-sm appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 dark:text-gray-200 dark:bg-gray-800 dark:border-gray-600 leading-tight focus:outline-none focus:ring-2 focus:ring-primary-green focus:border-transparent"
+          />
+          <div id="heart-rate-info" class="text-xs mt-1 font-medium"></div>
+          <div class="mt-2">
+            <input
+              type="range"
+              id="heart-rate-slider"
+              min="0"
+              max="220"
+              step="1"
+              value="{{ metric.heart_rate }}"
+              class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+            />
+          </div>
+          <div
+            class="text-xs flex justify-between text-gray-500 dark:text-gray-400 mt-1"
+          >
+            <span>0</span>
+            <span class="text-gray-500 dark:text-gray-400">Normal: 60-100</span>
+            <span>220</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg transition-all hover:shadow-md mb-6"
+    >
+      <label
+        for="notes"
+        class="block text-gray-700 dark:text-gray-200 font-bold mb-2 flex items-center"
+      >
+        <i class="bx bx-note text-yellow-500 text-xl mr-2"></i>
+        Notes (Optional)
+      </label>
+      <textarea
+        name="notes"
+        id="notes"
+        rows="4"
+        placeholder="How did you feel today?"
+        class="shadow-sm appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 dark:text-gray-200 dark:bg-gray-800 dark:border-gray-600 leading-tight focus:outline-none focus:ring-2 focus:ring-primary-green focus:border-transparent"
+      >
+{{ metric.notes }}</textarea
+      >
+    </div>
+
+    <div class="flex justify-between mt-4">
+      <div class="flex space-x-2">
+        <a
+          href="{{ url_for('metrics.get_metrics') }}"
+          class="inline-flex items-center bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline transition"
+        >
+          Cancel
+        </a>
+        <button
+          type="button"
+          id="delete-metric"
+          class="inline-flex items-center bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline transition"
+        >
+          <i class="bx bx-trash mr-1"></i> Delete
+        </button>
+      </div>
+      <button
+        type="submit"
+        class="flex items-center bg-primary-green hover:bg-dark-green text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline transition"
+      >
+        <i class="bx bx-save mr-1"></i> Update Metrics
+      </button>
+    </div>
+
+    <!-- Hidden Delete Form -->
+    <div id="delete-form" class="hidden">
+      <form
+        method="POST"
+        action="{{ url_for('metrics.delete_metric', metric_id=metric.metric_id) }}"
+        id="delete-metric-form"
+      ></form>
+    </div>
+  </form>
+</div>
+
+<!-- Confirmation Modal (hidden by default) -->
+<div
+  id="confirmation-modal"
+  class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden"
+>
+  <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md mx-4">
+    <h3 class="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">
+      Confirm Deletion
+    </h3>
+    <p class="text-gray-600 dark:text-gray-300 mb-6">
+      Are you sure you want to delete this health metric record? This action
+      cannot be undone.
+    </p>
+    <div class="flex justify-end space-x-3">
+      <button
+        id="cancel-delete"
+        class="bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition"
+      >
+        Cancel
+      </button>
+      <button
+        id="confirm-delete"
+        class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition"
+      >
+        Delete
+      </button>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block extra_scripts %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Set up slider interactions
+    const caloriesInput = document.getElementById("calories");
+    const caloriesSlider = document.getElementById("calories-slider");
+    const waterInput = document.getElementById("water_intake");
+    const waterSlider = document.getElementById("water-slider");
+    const stepsInput = document.getElementById("steps");
+    const stepsSlider = document.getElementById("steps-slider");
+    const sleepInput = document.getElementById("hours_sleep");
+    const sleepSlider = document.getElementById("sleep-slider");
+    const heartRateInput = document.getElementById("heart_rate");
+    const heartRateSlider = document.getElementById("heart-rate-slider");
+
+    // Load stored goals
+    const storedGoals = localStorage.getItem("healthGoals");
+    let goals = {
+      steps: 10000,
+      sleep: 8,
+      water: 2.5,
+      calories: 2000,
+    };
+
+    if (storedGoals) {
+      try {
+        goals = { ...goals, ...JSON.parse(storedGoals) };
+      } catch (e) {
+        console.error("Error parsing goals:", e);
+      }
+    }
+
+    // Update goal labels
+    document.getElementById("calories-goal").textContent =
+      goals.calories + " cal";
+    document.getElementById("water-goal").textContent = goals.water + "L";
+    document.getElementById("steps-goal").textContent = goals.steps;
+    document.getElementById("sleep-goal").textContent = goals.sleep + "h";
+
+    // Set up sliders
+    caloriesSlider.addEventListener("input", function () {
+      caloriesInput.value = this.value;
+    });
+
+    caloriesInput.addEventListener("input", function () {
+      caloriesSlider.value = this.value;
+    });
+
+    waterSlider.addEventListener("input", function () {
+      waterInput.value = this.value;
+      updateWaterProgress();
+    });
+
+    waterInput.addEventListener("input", function () {
+      waterSlider.value = this.value;
+      updateWaterProgress();
+    });
+
+    stepsSlider.addEventListener("input", function () {
+      stepsInput.value = this.value;
+      updateStepGoal();
+    });
+
+    stepsInput.addEventListener("input", function () {
+      stepsSlider.value = this.value;
+      updateStepGoal();
+    });
+
+    sleepSlider.addEventListener("input", function () {
+      sleepInput.value = this.value;
+      updateSleepFeedback();
+    });
+
+    sleepInput.addEventListener("input", function () {
+      sleepSlider.value = this.value;
+      updateSleepFeedback();
+    });
+
+    heartRateSlider.addEventListener("input", function () {
+      heartRateInput.value = this.value;
+      updateHeartRateInfo();
+    });
+
+    heartRateInput.addEventListener("input", function () {
+      heartRateSlider.value = this.value;
+      updateHeartRateInfo();
+    });
+
+    // Initialize with current values
+    updateWaterProgress();
+    updateStepGoal();
+    updateSleepFeedback();
+    updateHeartRateInfo();
+
+    // Update water progress
+    function updateWaterProgress() {
+      const waterProgress = document.getElementById("water-progress");
+      const value = parseFloat(waterInput.value) || 0;
+      const percentage = (value / 5) * 100;
+      waterProgress.style.width = percentage + "%";
+    }
+
+    // Update step goal percentage
+    function updateStepGoal() {
+      const steps = parseInt(stepsInput.value) || 0;
+      const percentage = Math.round((steps / goals.steps) * 100);
+      const stepsPercentage = document.getElementById("steps-percentage");
+
+      if (percentage >= 100) {
+        stepsPercentage.className = "text-green-500 dark:text-green-400";
+        stepsPercentage.textContent =
+          "Goal reached! " + percentage + "% of daily goal";
+      } else {
+        stepsPercentage.className = "text-gray-500 dark:text-gray-400";
+        stepsPercentage.textContent = percentage + "% of daily goal";
+      }
+    }
+
+    // Update sleep feedback
+    function updateSleepFeedback() {
+      const sleepHours = parseFloat(sleepInput.value) || 0;
+      const sleepFeedback = document.getElementById("sleep-feedback");
+
+      if (sleepHours < 6) {
+        sleepFeedback.className =
+          "text-red-500 dark:text-red-400 text-xs mt-1 font-medium";
+        sleepFeedback.textContent = "Less than recommended (6-8 hours)";
+      } else if (sleepHours >= 6 && sleepHours <= 8) {
+        sleepFeedback.className =
+          "text-green-500 dark:text-green-400 text-xs mt-1 font-medium";
+        sleepFeedback.textContent = "Optimal sleep duration";
+      } else {
+        sleepFeedback.className =
+          "text-yellow-500 dark:text-yellow-400 text-xs mt-1 font-medium";
+        sleepFeedback.textContent = "More than typical recommendation";
+      }
+    }
+
+    // Update heart rate info
+    function updateHeartRateInfo() {
+      const heartRate = parseInt(heartRateInput.value) || 0;
+      const heartRateInfo = document.getElementById("heart-rate-info");
+
+      if (heartRate === 0) {
+        heartRateInfo.className =
+          "text-gray-500 dark:text-gray-400 text-xs mt-1 font-medium";
+        heartRateInfo.textContent = "Not measured";
+      } else if (heartRate < 60) {
+        heartRateInfo.className =
+          "text-yellow-500 dark:text-yellow-400 text-xs mt-1 font-medium";
+        heartRateInfo.textContent = "Below resting range (bradycardia)";
+      } else if (heartRate >= 60 && heartRate <= 100) {
+        heartRateInfo.className =
+          "text-green-500 dark:text-green-400 text-xs mt-1 font-medium";
+        heartRateInfo.textContent = "Normal resting heart rate";
+      } else {
+        heartRateInfo.className =
+          "text-red-500 dark:text-red-400 text-xs mt-1 font-medium";
+        heartRateInfo.textContent = "Above resting range (tachycardia)";
+      }
+    }
+
+    // Delete metric handling
+    const deleteMetricBtn = document.getElementById("delete-metric");
+    const confirmationModal = document.getElementById("confirmation-modal");
+    const cancelDeleteBtn = document.getElementById("cancel-delete");
+    const confirmDeleteBtn = document.getElementById("confirm-delete");
+    const deleteForm = document.getElementById("delete-metric-form");
+
+    deleteMetricBtn.addEventListener("click", function () {
+      confirmationModal.classList.remove("hidden");
+    });
+
+    cancelDeleteBtn.addEventListener("click", function () {
+      confirmationModal.classList.add("hidden");
+    });
+
+    confirmDeleteBtn.addEventListener("click", function () {
+      deleteForm.submit();
+    });
+  });
+</script>
+{% endblock %}

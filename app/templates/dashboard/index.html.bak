@@ -1,0 +1,546 @@
+{% extends "base.html" %} {% block title %}Dashboard - HealthTracker{% endblock
+%} {% block content %}
+<div class="mb-6">
+  <h1 class="text-3xl font-bold text-gray-800">Welcome, {{ username }}!</h1>
+  <p class="text-gray-600">Here's an overview of your health metrics.</p>
+</div>
+
+<!-- Summary Cards -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+  <div class="bg-white rounded-lg shadow-md p-6">
+    <h3 class="text-lg font-semibold text-gray-700 mb-2">Total Entries</h3>
+    <p class="text-3xl font-bold text-blue-600">{{ total_metrics }}</p>
+    <p class="text-sm text-gray-500 mt-2">Total days tracked</p>
+  </div>
+
+  <div class="bg-white rounded-lg shadow-md p-6">
+    <h3 class="text-lg font-semibold text-gray-700 mb-2">Avg. Daily Steps</h3>
+    <p class="text-3xl font-bold text-blue-600">{{ avg_steps }}</p>
+    <p class="text-sm text-gray-500 mt-2">Last 7 days</p>
+  </div>
+
+  <div class="bg-white rounded-lg shadow-md p-6">
+    <h3 class="text-lg font-semibold text-gray-700 mb-2">Avg. Sleep</h3>
+    <p class="text-3xl font-bold text-blue-600">{{ avg_sleep }} hrs</p>
+    <p class="text-sm text-gray-500 mt-2">Last 7 days</p>
+  </div>
+</div>
+
+<!-- Time Range Selector -->
+<div class="mb-6 bg-white rounded-lg shadow-md p-4">
+  <h3 class="text-lg font-semibold text-gray-700 mb-4">Time Range</h3>
+  <div class="flex space-x-4">
+    <button
+      class="time-range-btn bg-blue-600 text-white px-4 py-2 rounded-md"
+      data-range="week"
+    >
+      Last 7 Days
+    </button>
+    <button
+      class="time-range-btn bg-gray-200 text-gray-800 px-4 py-2 rounded-md"
+      data-range="month"
+    >
+      Last 30 Days
+    </button>
+    <button
+      class="time-range-btn bg-gray-200 text-gray-800 px-4 py-2 rounded-md"
+      data-range="year"
+    >
+      Last Year
+    </button>
+  </div>
+</div>
+
+<!-- Charts Section -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+  <!-- Steps Chart -->
+  <div class="bg-white rounded-lg shadow-md p-6">
+    <h3 class="text-lg font-semibold text-gray-700 mb-4">Steps Taken</h3>
+    <div class="h-80">
+      <canvas id="stepsChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Calories Chart -->
+  <div class="bg-white rounded-lg shadow-md p-6">
+    <h3 class="text-lg font-semibold text-gray-700 mb-4">Calories Consumed</h3>
+    <div class="h-80">
+      <canvas id="caloriesChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Sleep Chart -->
+  <div class="bg-white rounded-lg shadow-md p-6">
+    <h3 class="text-lg font-semibold text-gray-700 mb-4">Hours of Sleep</h3>
+    <div class="h-80">
+      <canvas id="sleepChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Water Intake Chart -->
+  <div class="bg-white rounded-lg shadow-md p-6">
+    <h3 class="text-lg font-semibold text-gray-700 mb-4">Water Intake (L)</h3>
+    <div class="h-80">
+      <canvas id="waterChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- Correlation Chart Section -->
+<div class="bg-white rounded-lg shadow-md p-6 mb-8">
+  <h3 class="text-lg font-semibold text-gray-700 mb-4">Metrics Correlation</h3>
+  <p class="text-sm text-gray-500 mb-4">
+    View how your health metrics correlate with each other
+  </p>
+  <div class="h-96">
+    <canvas id="correlationChart"></canvas>
+  </div>
+</div>
+
+<!-- Health Connections Chart -->
+<div class="bg-white rounded-lg shadow-md p-6 mb-8">
+  <h3 class="text-lg font-semibold text-gray-700 mb-4">Health Connections</h3>
+  <p class="text-sm text-gray-600 mb-4">
+    This chart shows how your different health metrics influence each other. The
+    stronger the bar, the stronger the relationship between those metrics.
+  </p>
+  <div class="h-96">
+    <canvas id="correlationChart"></canvas>
+  </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="bg-white rounded-lg shadow-md p-6 mb-8">
+  <h3 class="text-lg font-semibold text-gray-700 mb-4">Quick Actions</h3>
+  <div class="flex flex-wrap gap-4">
+    <a
+      href="{{ url_for('metrics.new_metric') }}"
+      class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition"
+      >Add Today's Metrics</a
+    >
+    <a
+      href="{{ url_for('metrics.get_metrics') }}"
+      class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded transition"
+      >View All Metrics</a
+    >
+  </div>
+</div>
+{% endblock %} {% block extra_scripts %}
+<script>
+  // This line uses a global variable to avoid Jinja template injection issues
+  // @ts-ignore
+  var globalChartData = {{ chart_data|tojson|safe }};
+
+  document.addEventListener("DOMContentLoaded", function() {
+    console.log("Chart data received:", globalChartData);
+
+    // Check if we have data before creating charts
+    if (globalChartData && globalChartData.dates && globalChartData.dates.length > 0) {
+      // Create charts
+      createChart(
+        "stepsChart",
+        "Steps",
+        globalChartData.dates,
+        globalChartData.steps,
+        "rgba(54, 162, 235, 0.2)",
+        "rgba(54, 162, 235, 1)"
+      );
+      createChart(
+        "caloriesChart",
+        "Calories",
+        globalChartData.dates,
+        globalChartData.calories,
+        "rgba(255, 99, 132, 0.2)",
+        "rgba(255, 99, 132, 1)"
+      );
+      createChart(
+        "sleepChart",
+        "Hours",
+        globalChartData.dates,
+        globalChartData.sleep,
+        "rgba(75, 192, 192, 0.2)",
+        "rgba(75, 192, 192, 1)"
+      );
+      createChart(
+        "waterChart",
+        "Liters",
+        globalChartData.dates,
+        globalChartData.water,
+        "rgba(153, 102, 255, 0.2)",
+        "rgba(153, 102, 255, 1)"
+      );
+
+      // Create the correlation chart
+      createCorrelationChart(globalChartData);
+    } else {
+      console.warn("No chart data available or empty dataset");
+      // Display message in each chart container
+      displayNoDataMessage("stepsChart", "No step data available");
+      displayNoDataMessage("caloriesChart", "No calorie data available");
+      displayNoDataMessage("sleepChart", "No sleep data available");
+      displayNoDataMessage("waterChart", "No water intake data available");
+      displayNoDataMessage("correlationChart", "No data available for correlation analysis");
+    }
+
+    // Handle time range buttons
+    var timeRangeBtns = document.querySelectorAll(".time-range-btn");
+    timeRangeBtns.forEach(function(btn) {
+      btn.addEventListener("click", function() {
+        // Update UI
+        timeRangeBtns.forEach(function(b) {
+          b.classList.remove("bg-blue-600", "text-white");
+          b.classList.add("bg-gray-200", "text-gray-800");
+        });
+        this.classList.remove("bg-gray-200", "text-gray-800");
+        this.classList.add("bg-blue-600", "text-white");
+
+        // Fetch data for the selected range
+        var range = this.getAttribute("data-range");
+        fetchDataForRange(range);
+      });
+    });
+  });
+
+  function displayNoDataMessage(canvasId, message) {
+    var canvasElement = document.getElementById(canvasId);
+    if (!canvasElement) {
+      console.error("Canvas element with ID " + canvasId + " not found");
+      return;
+    }
+
+    var container = canvasElement.parentNode;
+
+    // Hide the canvas
+    canvasElement.style.display = 'none';
+
+    // Create and append message
+    var messageElem = document.createElement('div');
+    messageElem.className = 'text-gray-500 text-center py-10';
+    messageElem.textContent = message;
+    container.appendChild(messageElem);
+  }
+
+  function createChart(canvasId, label, labels, data, backgroundColor, borderColor) {
+    var canvas = document.getElementById(canvasId);
+    if (!canvas) {
+      console.error("Canvas element with ID " + canvasId + " not found");
+      return;
+    }
+
+    var ctx = canvas.getContext("2d");
+    if (!ctx) {
+      console.error("Could not get 2d context for canvas " + canvasId);
+      return;
+    }
+
+    new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: label,
+            data: data,
+            backgroundColor: backgroundColor,
+            borderColor: borderColor,
+            borderWidth: 2,
+            tension: 0.1,
+            fill: true
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        },
+        plugins: {
+          legend: {
+            display: true,
+            position: 'top'
+          },
+          tooltip: {
+            enabled: true,
+            mode: 'index',
+            intersect: false
+          }
+        },
+        interaction: {
+          mode: 'nearest',
+          axis: 'x',
+          intersect: false
+        }
+      }
+    });
+    console.log("Chart " + canvasId + " created successfully");
+  }
+
+  function fetchDataForRange(range) {
+    console.log("Fetching data for range: " + range);
+    fetch('/dashboard/data?range=' + range)
+      .then(function(response) {
+        if (!response.ok) {
+          throw new Error("HTTP error! status: " + response.status);
+        }
+        return response.json();
+      })
+      .then(function(data) {
+        console.log("New data received:", data);
+        if (data && data.dates && data.dates.length > 0) {
+          // Instead of just reloading, update charts with new data
+          updateChartsWithData(data);
+        } else {
+          console.warn("Received empty data from server");
+          // Only reload if no data is available
+          displayNoDataForAllCharts();
+        }
+      })
+      .catch(function(error) {
+        console.error("Error fetching data:", error);
+        alert("Failed to load data. Please try again later.");
+      });
+  }
+
+  function updateChartsWithData(data) {
+    // Get all chart instances and destroy them
+    var chartIds = ["stepsChart", "caloriesChart", "sleepChart", "waterChart", "correlationChart"];
+    chartIds.forEach(function(id) {
+      var canvas = document.getElementById(id);
+      if (canvas) {
+        // Clear any error messages
+        var container = canvas.parentNode;
+        var messages = container.querySelectorAll('.text-gray-500');
+        messages.forEach(function(msg) {
+          container.removeChild(msg);
+        });
+
+        // Show canvas again
+        canvas.style.display = 'block';
+
+        // Get chart instance and destroy it
+        var chartInstance = Chart.getChart(canvas);
+        if (chartInstance) {
+          chartInstance.destroy();
+        }
+      }
+    });
+
+    // Create new charts with the updated data
+    createChart("stepsChart", "Steps", data.dates, data.steps,
+                "rgba(54, 162, 235, 0.2)", "rgba(54, 162, 235, 1)");
+
+    createChart("caloriesChart", "Calories", data.dates, data.calories,
+                "rgba(255, 99, 132, 0.2)", "rgba(255, 99, 132, 1)");
+
+    createChart("sleepChart", "Hours", data.dates, data.sleep,
+                "rgba(75, 192, 192, 0.2)", "rgba(75, 192, 192, 1)");
+
+    createChart("waterChart", "Liters", data.dates, data.water,
+                "rgba(153, 102, 255, 0.2)", "rgba(153, 102, 255, 1)");
+
+    // Update correlation chart
+    createCorrelationChart(data);
+  }
+
+  function displayNoDataForAllCharts() {
+    displayNoDataMessage("stepsChart", "No step data available for this time range");
+    displayNoDataMessage("caloriesChart", "No calorie data available for this time range");
+    displayNoDataMessage("sleepChart", "No sleep data available for this time range");
+    displayNoDataMessage("waterChart", "No water intake data available for this time range");
+    displayNoDataMessage("correlationChart", "No data available for correlation analysis for this time range");
+  }
+
+  // Function to create the correlation chart
+  function createCorrelationChart(data) {
+    var canvas = document.getElementById("correlationChart");
+    if (!canvas) {
+      console.error("Canvas element for correlation chart not found");
+      return;
+    }
+
+    var ctx = canvas.getContext("2d");
+    if (!ctx) {
+      console.error("Could not get 2d context for correlation chart");
+      return;
+    }
+
+    // Calculate correlation coefficients
+    var correlations = [
+      { name: "Steps vs. Sleep", value: calculateCorrelation(data.steps, data.sleep), impact: "More steps → Better sleep" },
+      { name: "Steps vs. Calories", value: calculateCorrelation(data.steps, data.calories), impact: "More steps → More calories burned" },
+      { name: "Sleep vs. Calories", value: calculateCorrelation(data.sleep, data.calories), impact: "More sleep → Better metabolism" },
+      { name: "Water vs. Steps", value: calculateCorrelation(data.water, data.steps), impact: "More water → More energy for steps" },
+      { name: "Water vs. Sleep", value: calculateCorrelation(data.water, data.sleep), impact: "Good hydration → Better sleep" }
+    ];
+
+    // Sort by correlation strength (absolute value)
+    correlations.sort((a, b) => Math.abs(b.value) - Math.abs(a.value));
+
+    // Create labels and data for the chart
+    var labels = correlations.map(item => item.name);
+    var values = correlations.map(item => Math.round(item.value * 100) / 100); // Round to 2 decimal places
+    var backgroundColors = values.map(value => getCorrelationColor(value));
+    var impacts = correlations.map(item => item.impact);
+
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Correlation Strength',
+          data: values,
+          backgroundColor: backgroundColors,
+          borderColor: backgroundColors.map(color => color.replace('0.7', '1')),
+          borderWidth: 1
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: {
+            beginAtZero: true,
+            min: -1,
+            max: 1,
+            title: {
+              display: true,
+              text: 'Correlation (-1 to +1)'
+            },
+            ticks: {
+              callback: function(value) {
+                if (value === -1) return 'Strong Negative';
+                if (value === -0.5) return 'Moderate Negative';
+                if (value === 0) return 'No Correlation';
+                if (value === 0.5) return 'Moderate Positive';
+                if (value === 1) return 'Strong Positive';
+                return '';
+              }
+            }
+          }
+        },
+        plugins: {
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                const index = context.dataIndex;
+                const value = context.parsed.x;
+                let label = '';
+
+                // Add correlation value
+                label = 'Correlation: ' + value;
+
+                // Add human-readable explanation
+                if (value > 0.7) label += ' (Strong positive relationship)';
+                else if (value > 0.3) label += ' (Moderate positive relationship)';
+                else if (value > -0.3) label += ' (Weak or no relationship)';
+                else if (value > -0.7) label += ' (Moderate negative relationship)';
+                else label += ' (Strong negative relationship)';
+
+                // Add impact explanation
+                label += '\nWhat this means: ' + impacts[index];
+
+                return label;
+              }
+            }
+          },
+          legend: {
+            display: false
+          },
+          title: {
+            display: true,
+            text: 'How Your Health Metrics Relate to Each Other',
+            font: {
+              size: 16
+            }
+          }
+        }
+      }
+    });
+
+    // Add explanation text below the chart
+    var container = canvas.parentNode;
+    var explanationDiv = document.createElement('div');
+    explanationDiv.className = 'mt-4 text-sm text-gray-600';
+    explanationDiv.innerHTML = `
+      <p><strong>How to read this chart:</strong></p>
+      <ul class="list-disc ml-5 mt-2">
+        <li><span class="font-semibold text-green-600">Positive values (green):</span> As one metric increases, the other tends to increase too</li>
+        <li><span class="font-semibold text-red-600">Negative values (red):</span> As one metric increases, the other tends to decrease</li>
+        <li><span class="font-semibold text-gray-600">Values near zero:</span> No clear relationship between the metrics</li>
+        <li>Stronger correlations (closer to +1 or -1) indicate stronger relationships</li>
+      </ul>
+    `;
+    container.appendChild(explanationDiv);
+
+    console.log("Correlation chart created successfully");
+  }
+
+  // Calculate Pearson correlation coefficient
+  function calculateCorrelation(x, y) {
+    // Need at least 2 data points
+    if (x.length < 2 || y.length < 2 || x.length !== y.length) {
+      return 0;
+    }
+
+    // Filter out null/undefined values
+    let validPairs = [];
+    for (let i = 0; i < x.length; i++) {
+      if (x[i] !== null && y[i] !== null &&
+          x[i] !== undefined && y[i] !== undefined &&
+          !isNaN(x[i]) && !isNaN(y[i])) {
+        validPairs.push([x[i], y[i]]);
+      }
+    }
+
+    // Need at least 2 valid pairs
+    if (validPairs.length < 2) {
+      return 0;
+    }
+
+    // Extract valid x and y values
+    let validX = validPairs.map(pair => pair[0]);
+    let validY = validPairs.map(pair => pair[1]);
+
+    // Calculate means
+    let meanX = validX.reduce((sum, val) => sum + val, 0) / validX.length;
+    let meanY = validY.reduce((sum, val) => sum + val, 0) / validY.length;
+
+    // Calculate correlation
+    let numerator = 0;
+    let denominatorX = 0;
+    let denominatorY = 0;
+
+    for (let i = 0; i < validX.length; i++) {
+      let xDiff = validX[i] - meanX;
+      let yDiff = validY[i] - meanY;
+      numerator += xDiff * yDiff;
+      denominatorX += xDiff * xDiff;
+      denominatorY += yDiff * yDiff;
+    }
+
+    if (denominatorX === 0 || denominatorY === 0) {
+      return 0;
+    }
+
+    return numerator / Math.sqrt(denominatorX * denominatorY);
+  }
+
+  // Get color based on correlation value
+  function getCorrelationColor(value) {
+    if (value > 0.7) return 'rgba(39, 174, 96, 0.7)';  // Strong positive - darker green
+    if (value > 0.3) return 'rgba(88, 214, 141, 0.7)'; // Moderate positive - light green
+    if (value < -0.7) return 'rgba(192, 57, 43, 0.7)';  // Strong negative - darker red
+    if (value < -0.3) return 'rgba(231, 76, 60, 0.7)'; // Moderate negative - light red
+    return 'rgba(149, 165, 166, 0.7)'; // Weak or no correlation - gray
+  }
+
+  function updateCharts(data) {
+    // This is now handled by updateChartsWithData
+    updateChartsWithData(data);
+  }
+</script>
+{% endblock %}

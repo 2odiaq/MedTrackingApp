@@ -1,0 +1,613 @@
+{% extends "base.html" %} {% block title %}Add Today's Health Metrics -
+HealthTracker{% endblock %} {% block content %}
+<div class="mb-6">
+  <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100">
+    Add Today's Health Metrics
+  </h1>
+  <p class="text-gray-600 dark:text-gray-300">
+    Track your daily health to build a better you.
+  </p>
+</div>
+
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
+  <form method="POST" action="{{ url_for('metrics.new_metric') }}" class="p-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+      <!-- Date -->
+      <div
+        class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg transition-all hover:shadow-md"
+      >
+        <label
+          for="date_logged"
+          class="block text-gray-700 dark:text-gray-200 font-bold mb-2 flex items-center"
+        >
+          <i class="bx bx-calendar text-primary-green text-xl mr-2"></i>
+          Date
+        </label>
+        <div class="relative">
+          <input
+            type="date"
+            name="date_logged"
+            id="date_logged"
+            value="{{ today }}"
+            required
+            class="shadow-sm appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 dark:text-gray-200 dark:bg-gray-800 dark:border-gray-600 leading-tight focus:outline-none focus:ring-2 focus:ring-primary-green focus:border-transparent"
+          />
+          <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            Today is the default
+          </div>
+        </div>
+      </div>
+
+      <!-- Calories -->
+      <div
+        class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg transition-all hover:shadow-md"
+      >
+        <label
+          for="calories"
+          class="block text-gray-700 dark:text-gray-200 font-bold mb-2 flex items-center"
+        >
+          <i class="bx bx-flame text-orange-500 text-xl mr-2"></i>
+          Calories Consumed
+        </label>
+        <div class="relative">
+          <input
+            type="number"
+            name="calories"
+            id="calories"
+            min="0"
+            value="0"
+            required
+            class="shadow-sm appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 dark:text-gray-200 dark:bg-gray-800 dark:border-gray-600 leading-tight focus:outline-none focus:ring-2 focus:ring-primary-green focus:border-transparent"
+          />
+          <div class="mt-2">
+            <input
+              type="range"
+              id="calories-slider"
+              min="0"
+              max="4000"
+              step="50"
+              value="0"
+              class="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-primary-green"
+            />
+          </div>
+          <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            Recommended: 1,800-2,500 calories
+          </div>
+        </div>
+      </div>
+
+      <!-- Water -->
+      <div
+        class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg transition-all hover:shadow-md"
+      >
+        <label
+          for="water_intake"
+          class="block text-gray-700 dark:text-gray-200 font-bold mb-2 flex items-center"
+        >
+          <i class="bx bx-droplet text-blue-500 text-xl mr-2"></i>
+          Water Intake (L)
+        </label>
+        <div class="relative">
+          <input
+            type="number"
+            name="water_intake"
+            id="water_intake"
+            min="0"
+            step="0.1"
+            value="0.0"
+            required
+            class="shadow-sm appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 dark:text-gray-200 dark:bg-gray-800 dark:border-gray-600 leading-tight focus:outline-none focus:ring-2 focus:ring-primary-green focus:border-transparent"
+          />
+          <div class="mt-2">
+            <input
+              type="range"
+              id="water-slider"
+              min="0"
+              max="5"
+              step="0.1"
+              value="0"
+              class="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-primary-green"
+            />
+          </div>
+          <div class="flex justify-between items-center mt-2">
+            <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2.5">
+              <div
+                id="water-progress"
+                class="bg-blue-500 h-2.5 rounded-full"
+                style="width: 0%"
+              ></div>
+            </div>
+            <span
+              id="water-percentage"
+              class="text-sm text-gray-600 dark:text-gray-300 ml-2"
+              >0%</span
+            >
+          </div>
+          <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            Target: 2-3 liters daily
+          </div>
+        </div>
+      </div>
+
+      <!-- Steps -->
+      <div
+        class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg transition-all hover:shadow-md"
+      >
+        <label
+          for="steps"
+          class="block text-gray-700 dark:text-gray-200 font-bold mb-2 flex items-center"
+        >
+          <i class="bx bx-walk text-green-600 text-xl mr-2"></i>
+          Steps Taken
+        </label>
+        <div class="relative">
+          <input
+            type="number"
+            name="steps"
+            id="steps"
+            min="0"
+            value="0"
+            required
+            class="shadow-sm appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 dark:text-gray-200 dark:bg-gray-800 dark:border-gray-600 leading-tight focus:outline-none focus:ring-2 focus:ring-primary-green focus:border-transparent"
+          />
+          <div class="mt-2">
+            <input
+              type="range"
+              id="steps-slider"
+              min="0"
+              max="20000"
+              step="500"
+              value="0"
+              class="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-primary-green"
+            />
+          </div>
+          <div
+            id="step-goal"
+            class="text-xs text-gray-500 dark:text-gray-400 mt-1"
+          >
+            Goal: 10,000 steps
+          </div>
+        </div>
+      </div>
+
+      <!-- Sleep -->
+      <div
+        class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg transition-all hover:shadow-md"
+      >
+        <label
+          for="hours_sleep"
+          class="block text-gray-700 dark:text-gray-200 font-bold mb-2 flex items-center"
+        >
+          <i class="bx bx-moon text-indigo-500 text-xl mr-2"></i>
+          Hours of Sleep
+        </label>
+        <div class="relative">
+          <input
+            type="number"
+            name="hours_sleep"
+            id="hours_sleep"
+            min="0"
+            step="0.1"
+            value="0.0"
+            required
+            class="shadow-sm appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 dark:text-gray-200 dark:bg-gray-800 dark:border-gray-600 leading-tight focus:outline-none focus:ring-2 focus:ring-primary-green focus:border-transparent"
+          />
+          <div class="mt-2">
+            <input
+              type="range"
+              id="sleep-slider"
+              min="0"
+              max="12"
+              step="0.5"
+              value="0"
+              class="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-primary-green"
+            />
+          </div>
+          <div
+            id="sleep-recommendation"
+            class="text-xs text-gray-500 dark:text-gray-400 mt-1"
+          >
+            Recommended: 7-9 hours
+          </div>
+        </div>
+      </div>
+
+      <!-- Heart Rate -->
+      <div
+        class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg transition-all hover:shadow-md"
+      >
+        <label
+          for="heart_rate"
+          class="block text-gray-700 dark:text-gray-200 font-bold mb-2 flex items-center"
+        >
+          <i class="bx bxs-heart-circle text-red-500 text-xl mr-2"></i>
+          Heart Rate (bpm)
+        </label>
+        <div class="relative">
+          <input
+            type="number"
+            name="heart_rate"
+            id="heart_rate"
+            min="0"
+            value="0"
+            required
+            class="shadow-sm appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 dark:text-gray-200 dark:bg-gray-800 dark:border-gray-600 leading-tight focus:outline-none focus:ring-2 focus:ring-primary-green focus:border-transparent"
+          />
+          <div class="mt-2">
+            <input
+              type="range"
+              id="heart-rate-slider"
+              min="0"
+              max="200"
+              step="1"
+              value="0"
+              class="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-primary-green"
+            />
+          </div>
+          <div
+            id="heart-rate-info"
+            class="text-xs text-gray-500 dark:text-gray-400 mt-1"
+          >
+            Normal resting: 60-100 bpm
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div
+      class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg transition-all hover:shadow-md mb-6"
+    >
+      <label
+        for="notes"
+        class="block text-gray-700 dark:text-gray-200 font-bold mb-2 flex items-center"
+      >
+        <i class="bx bx-note text-yellow-500 text-xl mr-2"></i>
+        Notes (Optional)
+      </label>
+      <textarea
+        name="notes"
+        id="notes"
+        rows="4"
+        placeholder="How did you feel today?"
+        class="shadow-sm appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 dark:text-gray-200 dark:bg-gray-800 dark:border-gray-600 leading-tight focus:outline-none focus:ring-2 focus:ring-primary-green focus:border-transparent"
+      ></textarea>
+    </div>
+
+    <div class="mt-6 flex flex-wrap gap-2 mb-6">
+      <button
+        type="button"
+        id="use-yesterday"
+        class="flex items-center bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline transition"
+      >
+        <i class="bx bx-copy-alt mr-1"></i> Use Yesterday's Data
+      </button>
+    </div>
+
+    <div class="flex justify-between mt-4">
+      <a
+        href="{{ url_for('metrics.get_metrics') }}"
+        class="inline-flex items-center bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline transition"
+      >
+        Cancel
+      </a>
+      <button
+        type="submit"
+        class="flex items-center bg-primary-green hover:bg-dark-green text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline transition"
+      >
+        <i class="bx bx-save mr-1"></i> Save Metrics
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- Success Toast (hidden by default) -->
+<div
+  id="success-toast"
+  class="fixed bottom-4 right-4 bg-green-500 text-white py-3 px-4 rounded-lg shadow-lg flex items-center transform translate-y-16 opacity-0 transition-all duration-300 hidden"
+>
+  <i class="bx bx-check-circle text-2xl mr-2"></i>
+  <div>
+    <p class="font-bold">Metrics saved successfully!</p>
+    <div class="flex mt-1">
+      <a
+        href="{{ url_for('dashboard.view_dashboard') }}"
+        class="text-xs underline mr-3"
+        >View Summary</a
+      >
+      <button id="set-reminder" class="text-xs underline">Set Reminder</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Sync sliders with inputs - Calories
+    const caloriesInput = document.getElementById("calories");
+    const caloriesSlider = document.getElementById("calories-slider");
+    caloriesInput.addEventListener("input", () => {
+      caloriesSlider.value = caloriesInput.value;
+    });
+    caloriesSlider.addEventListener("input", () => {
+      caloriesInput.value = caloriesSlider.value;
+    });
+
+    // Sync sliders with inputs - Water
+    const waterInput = document.getElementById("water_intake");
+    const waterSlider = document.getElementById("water-slider");
+    const waterProgress = document.getElementById("water-progress");
+    const waterPercentage = document.getElementById("water-percentage");
+
+    waterInput.addEventListener("input", () => {
+      waterSlider.value = waterInput.value;
+      updateWaterProgress();
+    });
+    waterSlider.addEventListener("input", () => {
+      waterInput.value = waterSlider.value;
+      updateWaterProgress();
+    });
+
+    // Sync sliders with inputs - Steps
+    const stepsInput = document.getElementById("steps");
+    const stepsSlider = document.getElementById("steps-slider");
+    const stepGoal = document.getElementById("step-goal");
+
+    stepsInput.addEventListener("input", () => {
+      stepsSlider.value = stepsInput.value;
+      updateStepGoal();
+    });
+    stepsSlider.addEventListener("input", () => {
+      stepsInput.value = stepsSlider.value;
+      updateStepGoal();
+    });
+
+    // Sync sliders with inputs - Sleep
+    const sleepInput = document.getElementById("hours_sleep");
+    const sleepSlider = document.getElementById("sleep-slider");
+    sleepInput.addEventListener("input", () => {
+      sleepSlider.value = sleepInput.value;
+      updateSleepFeedback();
+    });
+    sleepSlider.addEventListener("input", () => {
+      sleepInput.value = sleepSlider.value;
+      updateSleepFeedback();
+    });
+
+    // Sync sliders with inputs - Heart Rate
+    const heartRateInput = document.getElementById("heart_rate");
+    const heartRateSlider = document.getElementById("heart-rate-slider");
+    const heartRateInfo = document.getElementById("heart-rate-info");
+
+    heartRateInput.addEventListener("input", () => {
+      heartRateSlider.value = heartRateInput.value;
+      updateHeartRateInfo();
+    });
+    heartRateSlider.addEventListener("input", () => {
+      heartRateInput.value = heartRateSlider.value;
+      updateHeartRateInfo();
+    });
+
+    // Update water intake progress
+    function updateWaterProgress() {
+      const value = parseFloat(waterInput.value);
+      const target = 2.5; // 2.5L target
+      const percentage = Math.min(Math.round((value / target) * 100), 100);
+
+      waterProgress.style.width = percentage + "%";
+      waterPercentage.textContent = percentage + "%";
+
+      // Color based on progress
+      if (percentage < 33) {
+        waterProgress.classList.remove("bg-green-500", "bg-yellow-500");
+        waterProgress.classList.add("bg-blue-500");
+      } else if (percentage < 66) {
+        waterProgress.classList.remove("bg-blue-500", "bg-green-500");
+        waterProgress.classList.add("bg-yellow-500");
+      } else {
+        waterProgress.classList.remove("bg-blue-500", "bg-yellow-500");
+        waterProgress.classList.add("bg-green-500");
+      }
+    }
+
+    // Sleep feedback
+    function updateSleepFeedback() {
+      const value = parseFloat(sleepInput.value);
+      const sleepRecommendation = document.getElementById(
+        "sleep-recommendation"
+      );
+
+      if (value < 6) {
+        sleepRecommendation.className =
+          "text-xs text-red-500 dark:text-red-400 mt-1";
+        sleepRecommendation.textContent = "Too little sleep: Aim for 7-9 hours";
+        sleepSlider.classList.add("accent-red-500");
+        sleepSlider.classList.remove("accent-yellow-500", "accent-green-500");
+      } else if (value < 7) {
+        sleepRecommendation.className =
+          "text-xs text-yellow-500 dark:text-yellow-400 mt-1";
+        sleepRecommendation.textContent = "Below optimal: 6-7 hours";
+        sleepSlider.classList.add("accent-yellow-500");
+        sleepSlider.classList.remove("accent-red-500", "accent-green-500");
+      } else if (value <= 9) {
+        sleepRecommendation.className =
+          "text-xs text-green-500 dark:text-green-400 mt-1";
+        sleepRecommendation.textContent = "Optimal sleep: 7-9 hours";
+        sleepSlider.classList.add("accent-green-500");
+        sleepSlider.classList.remove("accent-red-500", "accent-yellow-500");
+      } else {
+        sleepRecommendation.className =
+          "text-xs text-yellow-500 dark:text-yellow-400 mt-1";
+        sleepRecommendation.textContent = "Above average: >9 hours";
+        sleepSlider.classList.add("accent-yellow-500");
+        sleepSlider.classList.remove("accent-red-500", "accent-green-500");
+      }
+    }
+
+    // Heart rate feedback
+    function updateHeartRateInfo() {
+      const value = parseInt(heartRateInput.value);
+
+      if (value < 60 && value > 0) {
+        heartRateInfo.className =
+          "text-xs text-blue-500 dark:text-blue-400 mt-1";
+        heartRateInfo.textContent = "Below average: <60 bpm (athletic)";
+        heartRateSlider.classList.add("accent-blue-500");
+        heartRateSlider.classList.remove(
+          "accent-yellow-500",
+          "accent-green-500",
+          "accent-red-500"
+        );
+      } else if (value >= 60 && value <= 100) {
+        heartRateInfo.className =
+          "text-xs text-green-500 dark:text-green-400 mt-1";
+        heartRateInfo.textContent = "Normal resting: 60-100 bpm";
+        heartRateSlider.classList.add("accent-green-500");
+        heartRateSlider.classList.remove(
+          "accent-blue-500",
+          "accent-yellow-500",
+          "accent-red-500"
+        );
+      } else if (value > 100) {
+        heartRateInfo.className =
+          "text-xs text-yellow-500 dark:text-yellow-400 mt-1";
+        heartRateInfo.textContent = "Elevated: >100 bpm (active or stressed)";
+        heartRateSlider.classList.add("accent-yellow-500");
+        heartRateSlider.classList.remove(
+          "accent-blue-500",
+          "accent-green-500",
+          "accent-red-500"
+        );
+      } else {
+        heartRateInfo.className =
+          "text-xs text-gray-500 dark:text-gray-400 mt-1";
+        heartRateInfo.textContent = "Normal resting: 60-100 bpm";
+      }
+
+      // If rate is very high (over 140), show warning
+      if (value > 140) {
+        heartRateInfo.className = "text-xs text-red-500 dark:text-red-400 mt-1";
+        heartRateInfo.textContent = "Very high heart rate! Over 140 bpm";
+        heartRateSlider.classList.add("accent-red-500");
+        heartRateSlider.classList.remove(
+          "accent-blue-500",
+          "accent-green-500",
+          "accent-yellow-500"
+        );
+      }
+    }
+
+    // Steps goal feedback
+    function updateStepGoal() {
+      const value = parseInt(stepsInput.value);
+
+      if (value >= 10000) {
+        stepGoal.className =
+          "text-xs text-green-500 dark:text-green-400 mt-1 font-bold";
+        stepGoal.innerHTML =
+          '<i class="bx bx-badge-check"></i> Goal reached: 10,000+ steps';
+        stepsSlider.classList.add("accent-green-500");
+        stepsSlider.classList.remove("accent-primary-green");
+      } else {
+        const percentage = Math.round((value / 10000) * 100);
+        stepGoal.className = "text-xs text-gray-500 dark:text-gray-400 mt-1";
+        stepGoal.textContent = `${percentage}% of daily goal (10,000 steps)`;
+        stepsSlider.classList.remove("accent-green-500");
+        stepsSlider.classList.add("accent-primary-green");
+      }
+    }
+
+    // Use yesterday's data
+    document
+      .getElementById("use-yesterday")
+      .addEventListener("click", function () {
+        // Fetch yesterday's data from the API
+        fetch("{{ url_for('metrics.get_yesterday_metrics') }}", {
+          headers: {
+            "X-Requested-With": "XMLHttpRequest",
+          },
+        })
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("No data found for yesterday");
+            }
+            return response.json();
+          })
+          .then((data) => {
+            // Populate form with yesterday's data
+            document.getElementById("calories").value = data.calories;
+            document.getElementById("calories-slider").value = data.calories;
+
+            document.getElementById("water_intake").value = data.water_intake;
+            document.getElementById("water-slider").value = data.water_intake;
+            updateWaterProgress();
+
+            document.getElementById("steps").value = data.steps;
+            document.getElementById("steps-slider").value = data.steps;
+            updateStepGoal();
+
+            document.getElementById("hours_sleep").value = data.hours_sleep;
+            document.getElementById("sleep-slider").value = data.hours_sleep;
+            updateSleepFeedback();
+
+            document.getElementById("heart_rate").value = data.heart_rate;
+            document.getElementById("heart-rate-slider").value =
+              data.heart_rate;
+            updateHeartRateInfo();
+
+            document.getElementById("notes").value = data.notes || "";
+
+            // Show success message
+            const toast = document.createElement("div");
+            toast.className =
+              "fixed top-4 right-4 bg-green-500 text-white py-3 px-4 rounded-lg shadow-lg flex items-center";
+            toast.innerHTML =
+              '<i class="bx bx-check-circle text-2xl mr-2"></i><span>Yesterday\'s data loaded successfully!</span>';
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+              toast.classList.add(
+                "opacity-0",
+                "transition-opacity",
+                "duration-500"
+              );
+              setTimeout(() => toast.remove(), 500);
+            }, 3000);
+          })
+          .catch((error) => {
+            // Show error message
+            const toast = document.createElement("div");
+            toast.className =
+              "fixed top-4 right-4 bg-red-500 text-white py-3 px-4 rounded-lg shadow-lg flex items-center";
+            toast.innerHTML =
+              '<i class="bx bx-error-circle text-2xl mr-2"></i><span>' +
+              error.message +
+              "</span>";
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+              toast.classList.add(
+                "opacity-0",
+                "transition-opacity",
+                "duration-500"
+              );
+              setTimeout(() => toast.remove(), 500);
+            }, 3000);
+          });
+      });
+
+    // Form submission success toast (commented out, would be implemented with backend)
+    document.querySelector("form").addEventListener("submit", function (e) {
+      // Don't prevent form submission in production
+      // e.preventDefault();
+      // Show toast notification on successful save
+      // In production, this would happen in the success callback
+      // const toast = document.getElementById('success-toast');
+      // toast.classList.remove('hidden', 'transform', 'translate-y-16', 'opacity-0');
+      // setTimeout(() => {
+      //   toast.classList.add('transform', 'translate-y-16', 'opacity-0');
+      //   setTimeout(() => toast.classList.add('hidden'), 300);
+      // }, 5000);
+    });
+  });
+</script>
+{% endblock %}

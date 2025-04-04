@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en" class="{% if request.path == '/' or '/login' in request.path or '/register' in request.path %}{% else %}{% if 'dark-mode' in request.cookies or request.cookies.get('theme') == 'dark' %}dark{% endif %}{% endif %}">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}HealthTracker{% endblock %}</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              "primary-green": "#10B981",
+              "accent-green": "#ECFDF5",
+              "dark-green": "#047857",
+              "dark-background": "#111827",
+              "dark-muted": "#1F2937",
+            },
+          },
+        },
+        darkMode: 'class',
+      };
+    </script>
+
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chart.js annotation plugin for goal lines -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.0.2"></script>
+
+    <!-- Custom CSS -->
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/styles.css') }}"
+    />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Icons -->
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+
+    {% block extra_head %}{% endblock %}
+  </head>
+  <body class="bg-gray-100 dark:bg-dark-background flex flex-col min-h-screen">
+    <!-- Mobile Nav Toggle Button -->
+    <button id="mobile-nav-toggle" class="fixed top-4 left-4 z-50 bg-primary-green text-white rounded-full p-2 shadow-lg md:hidden">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+      </svg>
+    </button>
+
+    <!-- Sidebar Navigation -->
+    {% if 'user_id' in session %}
+    <div id="sidebar" class="sidebar md:translate-x-0 -translate-x-full transition-transform duration-300 ease-in-out dark:bg-dark-background dark:text-gray-100">
+      <div class="sidebar-header">
+        <a href="{{ url_for('index') }}" class="text-xl font-bold text-primary-green">HealthTracker</a>
+        <button id="sidebar-close" class="md:hidden text-gray-500 dark:text-gray-400">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div class="sidebar-menu">
+        <a href="{{ url_for('dashboard.view_dashboard') }}" class="sidebar-item {% if request.endpoint == 'dashboard.view_dashboard' %}active{% endif %} dark:text-gray-300 dark:hover:bg-dark-muted">
+          <i class='bx bxs-dashboard sidebar-icon'></i>
+          <span>Dashboard</span>
+        </a>
+        <a href="{{ url_for('metrics.get_metrics') }}" class="sidebar-item {% if request.endpoint == 'metrics.get_metrics' %}active{% endif %} dark:text-gray-300 dark:hover:bg-dark-muted">
+          <i class='bx bx-line-chart sidebar-icon'></i>
+          <span>My Metrics</span>
+        </a>
+        <a href="{{ url_for('metrics.new_metric') }}" class="sidebar-item {% if request.endpoint == 'metrics.new_metric' %}active{% endif %} dark:text-gray-300 dark:hover:bg-dark-muted">
+          <i class='bx bx-plus-circle sidebar-icon'></i>
+          <span>Add Metrics</span>
+        </a>
+        <hr class="border-gray-200 dark:border-gray-700 my-4">
+        <a href="#" id="sidebar-settings" class="sidebar-item dark:text-gray-300 dark:hover:bg-dark-muted">
+          <i class='bx bx-cog sidebar-icon'></i>
+          <span>Settings</span>
+        </a>
+        <a href="{{ url_for('auth.logout') }}" class="sidebar-item dark:text-gray-300 dark:hover:bg-dark-muted">
+          <i class='bx bx-log-out sidebar-icon'></i>
+          <span>Logout</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Main Content with Sidebar -->
+    <div id="main-content" class="with-sidebar transition-all duration-300 ease-in-out dark:bg-dark-background">
+    {% else %}
+    <!-- Static Top Navigation for Non-Logged In Users -->
+    <nav class="bg-white dark:bg-dark-background fixed w-full z-50 shadow-sm">
+      <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+        <a href="{{ url_for('index') }}" class="text-xl font-bold text-primary-green">HealthTracker</a>
+        <div class="hidden md:flex items-center space-x-8">
+          <a href="#features" class="text-gray-600 hover:text-primary-green transition">Features</a>
+          <a href="#how" class="text-gray-600 hover:text-primary-green transition">How It Works</a>
+          <a href="#testimonials" class="text-gray-600 hover:text-primary-green transition">Success</a>
+          <a href="#cta" class="text-gray-600 hover:text-primary-green transition">Join</a>
+        </div>
+        <div class="flex items-center space-x-4">
+          <a href="{{ url_for('auth.login') }}" class="btn-outline px-4 py-2 rounded-lg border-2 border-primary-green text-primary-green hover:bg-primary-green hover:text-white transition">Login</a>
+          <a href="{{ url_for('auth.register') }}" class="btn-primary px-4 py-2 rounded-lg bg-primary-green text-white hover:bg-dark-green transition">Sign Up</a>
+        </div>
+        <!-- Mobile Menu Button -->
+        <button id="mobile-menu-toggle" class="md:hidden text-gray-600 hover:text-primary-green">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+      </div>
+      <!-- Mobile Menu -->
+      <div id="mobile-menu" class="hidden md:hidden bg-white dark:bg-dark-background border-t">
+        <div class="container mx-auto px-4 py-2 space-y-2">
+          <a href="#features" class="block text-gray-600 hover:text-primary-green transition py-2">Features</a>
+          <a href="#how" class="block text-gray-600 hover:text-primary-green transition py-2">How It Works</a>
+          <a href="#testimonials" class="block text-gray-600 hover:text-primary-green transition py-2">Success</a>
+          <a href="#cta" class="block text-gray-600 hover:text-primary-green transition py-2">Join</a>
+        </div>
+      </div>
+    </nav>
+    <div>
+    {% endif %}
+
+      <!-- Flash Messages -->
+      <div class="container mx-auto px-4 py-8">
+        {% with messages = get_flashed_messages(with_categories=true) %} 
+        {% if messages %}
+        <div class="mb-6">
+          {% for category, message in messages %} 
+          {% if category == 'error' %}
+          <div
+            class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-2 dark:bg-red-900 dark:border-red-800 dark:text-red-100"
+            role="alert"
+          >
+            {{ message }}
+          </div>
+          {% else %}
+          <div
+            class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-2 dark:bg-green-900 dark:border-green-800 dark:text-green-100"
+            role="alert"
+          >
+            {{ message }}
+          </div>
+          {% endif %} {% endfor %}
+        </div>
+        {% endif %} {% endwith %}
+      </div>
+
+      <!-- Main Content -->
+      <main class="container mx-auto px-4 pb-8 flex-grow dark:text-gray-100">
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+
+    <footer class="bg-dark-green text-white py-6 mt-auto w-full">
+      <div class="container mx-auto px-4 md:flex md:justify-between">
+        <div class="mb-4 md:mb-0">
+          <h3 class="text-xl font-bold mb-2">HealthTracker</h3>
+          <p class="text-green-200">
+            &copy; {{ now.year }} HealthTracker. All rights reserved.
+          </p>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-8">
+          <div>
+            <h4 class="font-bold mb-2">Links</h4>
+            <ul class="space-y-1">
+              <li>
+                <a
+                  href="{{ url_for('index') }}"
+                  class="hover:text-green-200 transition"
+                  >Home</a
+                >
+              </li>
+              <li>
+                <a href="#features" class="hover:text-green-200 transition"
+                  >Features</a
+                >
+              </li>
+              <li>
+                <a
+                  href="mailto:support@healthtracker.com"
+                  class="hover:text-green-200 transition"
+                  >Contact</a
+                >
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h4 class="font-bold mb-2">Legal</h4>
+            <ul class="space-y-1">
+              <li>
+                <a href="#" class="hover:text-green-200 transition">Privacy</a>
+              </li>
+              <li>
+                <a href="#" class="hover:text-green-200 transition">Terms</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Custom JavaScript -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    
+    <!-- Mobile Menu and Smooth Scroll Script -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        // Mobile menu toggle
+        const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+        const mobileMenu = document.getElementById('mobile-menu');
+        
+        if (mobileMenuToggle && mobileMenu) {
+          mobileMenuToggle.addEventListener('click', function() {
+            mobileMenu.classList.toggle('hidden');
+          });
+        }
+
+        // Sidebar navigation toggle for logged-in users
+        const mobileNavToggle = document.getElementById('mobile-nav-toggle');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarClose = document.getElementById('sidebar-close');
+        
+        if (mobileNavToggle && sidebar) {
+          mobileNavToggle.addEventListener('click', function() {
+            sidebar.classList.toggle('-translate-x-full');
+            sidebar.classList.toggle('translate-x-0');
+            // Hide the toggle button when sidebar is open
+            mobileNavToggle.classList.add('hidden');
+          });
+        }
+        
+        if (sidebarClose && sidebar) {
+          sidebarClose.addEventListener('click', function() {
+            sidebar.classList.add('-translate-x-full');
+            sidebar.classList.remove('translate-x-0');
+            // Show the toggle button when sidebar is closed
+            mobileNavToggle.classList.remove('hidden');
+          });
+        }
+
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+          anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+              target.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+              });
+              // Close mobile menu if open
+              if (mobileMenu && !mobileMenu.classList.contains('hidden')) {
+                mobileMenu.classList.add('hidden');
+              }
+            }
+          });
+        });
+
+        // Navbar scroll effect
+        const navbar = document.querySelector('nav');
+        if (navbar) {
+          let lastScroll = 0;
+          window.addEventListener('scroll', () => {
+            const currentScroll = window.pageYOffset;
+            
+            if (currentScroll <= 0) {
+              navbar.classList.remove('shadow-md');
+            } else {
+              navbar.classList.add('shadow-md');
+            }
+            
+            lastScroll = currentScroll;
+          });
+        }
+      });
+    </script>
+    
+    {% block extra_scripts %}{% endblock %}
+    
+    <!-- Firebase SDK -->
+    <script type="module" src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js"></script>
+    <!-- Add more Firebase modules as needed -->
+    
+    <!-- Initialize Firebase -->
+    <script type="module" src="{{ url_for('static', filename='js/firebase.js') }}"></script>
+  </body>
+</html>
