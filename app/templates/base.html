@@ -130,7 +130,7 @@
     {% endif %}
 
       <!-- Flash Messages -->
-      <div class="container mx-auto px-4 py-8">
+      <div class="container mx-auto px-4 pt-20 pb-8">
         {% with messages = get_flashed_messages(with_categories=true) %} 
         {% if messages %}
         <div class="mb-6">
@@ -285,14 +285,5 @@
     </script>
     
     {% block extra_scripts %}{% endblock %}
-    
-    <!-- Firebase SDK -->
-    <script type="module" src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
-    <script type="module" src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
-    <script type="module" src="https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js"></script>
-    <!-- Add more Firebase modules as needed -->
-    
-    <!-- Initialize Firebase -->
-    <script type="module" src="{{ url_for('static', filename='js/firebase.js') }}"></script>
   </body>
 </html>

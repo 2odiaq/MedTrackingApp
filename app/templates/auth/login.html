@@ -83,7 +83,6 @@
         action="{{ url_for('auth.login') }}"
         class="py-6 px-8"
         id="login-form"
-        novalidate
       >
         <!-- Flash Messages -->
         {% with messages = get_flashed_messages(with_categories=true) %} {% if
@@ -195,35 +194,6 @@
           </button>
         </div>
 
-        <!-- Google Sign-In Button -->
-        <div class="mb-6">
-          <button
-            type="button"
-            id="google-login-button"
-            class="w-full bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 dark:text-gray-200 dark:bg-gray-700 dark:border-gray-600 dark:hover:bg-gray-600 font-medium py-2 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all flex items-center justify-center"
-          >
-            <svg class="h-5 w-5 mr-2" viewBox="0 0 24 24">
-              <path
-                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                fill="#4285F4"
-              />
-              <path
-                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                fill="#34A853"
-              />
-              <path
-                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                fill="#FBBC05"
-              />
-              <path
-                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                fill="#EA4335"
-              />
-            </svg>
-            <span>Sign in with Google</span>
-          </button>
-        </div>
-
         <div class="relative my-6">
           <div class="absolute inset-0 flex items-center">
             <div
@@ -281,233 +251,84 @@
         </p>
       </div>
     </div>
-
-    <div class="mt-4 text-center">
-      <button
-        id="theme-toggle"
-        class="text-gray-500 dark:text-gray-400 hover:text-primary-green dark:hover:text-green-400"
-      >
-        <svg
-          id="light-icon"
-          class="h-5 w-5 inline"
-          fill="currentColor"
-          viewBox="0 0 20 20"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"
-            fill-rule="evenodd"
-            clip-rule="evenodd"
-          ></path>
-        </svg>
-        <svg
-          id="dark-icon"
-          class="h-5 w-5 inline hidden"
-          fill="currentColor"
-          viewBox="0 0 20 20"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"
-          ></path>
-        </svg>
-        <span class="ml-1" id="theme-label">Light Mode</span>
-      </button>
-    </div>
   </div>
 </div>
-
-<footer
-  class="bg-white dark:bg-gray-900 py-4 border-t border-gray-200 dark:border-gray-700"
->
-  <div
-    class="container mx-auto px-4 flex flex-col sm:flex-row items-center justify-between"
-  >
-    <p class="text-gray-600 dark:text-gray-400 text-sm mb-2 sm:mb-0">
-      &copy; 2023 HealthTracker. All rights reserved.
-    </p>
-    <div class="flex space-x-4">
-      <a
-        href="#"
-        class="text-gray-600 dark:text-gray-400 text-sm hover:text-primary-green dark:hover:text-green-400"
-        >Privacy Policy</a
-      >
-      <a
-        href="#"
-        class="text-gray-600 dark:text-gray-400 text-sm hover:text-primary-green dark:hover:text-green-400"
-        >Terms of Service</a
-      >
-    </div>
-  </div>
-</footer>
 {% endblock %} {% block extra_scripts %}
-<script type="module">
-  import {
-    signInWithEmail,
-    signInWithGoogle,
-  } from "{{ url_for('static', filename='js/firebaseAuth.js') }}";
-
+<script>
   document.addEventListener("DOMContentLoaded", function () {
-    const loginForm = document.getElementById("login-form");
-    const loginButton = document.getElementById("login-button");
-    const googleLoginButton = document.getElementById("google-login-button");
-    const loadingIcon = document.getElementById("loading-icon");
-    const emailInput = document.getElementById("email");
-    const passwordInput = document.getElementById("password");
-    const errorMessages = document.querySelectorAll(".error-message");
-
-    // Toggle password visibility
+    // Password visibility toggle
     const passwordToggle = document.getElementById("password-toggle");
-    if (passwordToggle) {
-      passwordToggle.addEventListener("click", function () {
-        const passwordField = document.getElementById("password");
-        const type =
-          passwordField.getAttribute("type") === "password"
-            ? "text"
-            : "password";
-        passwordField.setAttribute("type", type);
+    const passwordField = document.getElementById("password");
 
-        // Update icon
-        if (type === "text") {
-          this.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    passwordToggle.addEventListener("click", function () {
+      const type =
+        passwordField.getAttribute("type") === "password" ? "text" : "password";
+      passwordField.setAttribute("type", type);
+
+      // Toggle eye icon
+      if (type === "text") {
+        passwordToggle.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-          </svg>`;
-        } else {
-          this.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          </svg>
+        `;
+      } else {
+        passwordToggle.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-          </svg>`;
-        }
-      });
-    }
-
-    // Show loading spinner when form is submitted
-    function showLoading() {
-      loginButton.disabled = true;
-      loadingIcon.classList.remove("hidden");
-    }
-
-    // Hide loading spinner
-    function hideLoading() {
-      loginButton.disabled = false;
-      loadingIcon.classList.add("hidden");
-    }
-
-    // Display error message
-    function showError(message) {
-      const errorDiv = document.createElement("div");
-      errorDiv.className =
-        "mb-4 p-3 rounded-lg bg-red-50 text-red-700 border border-red-200";
-      errorDiv.textContent = message;
-
-      const form = document.getElementById("login-form");
-      form.insertBefore(errorDiv, form.firstChild);
-    }
-
-    // Handle form submission with Firebase
-    if (loginForm) {
-      loginForm.addEventListener("submit", async function (e) {
-        e.preventDefault();
-
-        // Reset error messages
-        errorMessages.forEach((msg) => msg.classList.add("hidden"));
-
-        // Simple validation
-        let valid = true;
-        if (!emailInput.value.trim()) {
-          document.querySelector(".error-message").classList.remove("hidden");
-          valid = false;
-        }
-
-        if (!passwordInput.value.trim()) {
-          document
-            .querySelectorAll(".error-message")[1]
-            .classList.remove("hidden");
-          valid = false;
-        }
-
-        if (!valid) return;
-
-        showLoading();
-
-        // Attempt Firebase login
-        try {
-          const result = await signInWithEmail(
-            emailInput.value,
-            passwordInput.value
-          );
-
-          if (result.success) {
-            // Redirect to dashboard or home page
-            window.location.href = "{{ url_for('dashboard.view_dashboard') }}";
-          } else {
-            hideLoading();
-            showError(
-              result.error ||
-                "Failed to sign in. Please check your credentials."
-            );
-          }
-        } catch (error) {
-          hideLoading();
-          showError("An error occurred during sign in. Please try again.");
-          console.error("Login error:", error);
-        }
-      });
-    }
-
-    // Handle Google sign-in
-    if (googleLoginButton) {
-      googleLoginButton.addEventListener("click", async function () {
-        try {
-          const result = await signInWithGoogle();
-
-          if (result.success) {
-            // Redirect to dashboard or home page
-            window.location.href = "{{ url_for('dashboard.view_dashboard') }}";
-          } else {
-            showError(result.error || "Failed to sign in with Google.");
-          }
-        } catch (error) {
-          showError("An error occurred during Google sign in.");
-          console.error("Google login error:", error);
-        }
-      });
-    }
-
-    // Theme toggle
-    const themeToggle = document.getElementById("theme-toggle");
-    const lightIcon = document.getElementById("light-icon");
-    const darkIcon = document.getElementById("dark-icon");
-    const themeLabel = document.getElementById("theme-label");
-
-    // Force light theme
-    document.documentElement.classList.remove("dark");
-    localStorage.theme = "light";
-    lightIcon.classList.remove("hidden");
-    darkIcon.classList.add("hidden");
-    themeLabel.innerText = "Light Mode";
-
-    themeToggle.addEventListener("click", function () {
-      document.documentElement.classList.toggle("dark");
-
-      if (document.documentElement.classList.contains("dark")) {
-        localStorage.theme = "dark";
-        lightIcon.classList.add("hidden");
-        darkIcon.classList.remove("hidden");
-        themeLabel.innerText = "Dark Mode";
-      } else {
-        localStorage.theme = "light";
-        lightIcon.classList.remove("hidden");
-        darkIcon.classList.add("hidden");
-        themeLabel.innerText = "Light Mode";
+          </svg>
+        `;
       }
     });
 
-    // Always start with light theme regardless of localStorage or system preference
+    // Form validation
+    const loginForm = document.getElementById("login-form");
+    const emailField = document.getElementById("email");
+    const loginButton = document.getElementById("login-button");
+    const loadingIcon = document.getElementById("loading-icon");
+
+    loginForm.addEventListener("submit", function (e) {
+      let hasError = false;
+
+      // Reset errors
+      document.querySelectorAll(".error-message").forEach((el) => {
+        el.classList.add("hidden");
+      });
+
+      // Validate email
+      if (!emailField.value || !emailField.checkValidity()) {
+        const errorMsg = emailField.nextElementSibling;
+        errorMsg.classList.remove("hidden");
+        emailField.classList.add("border-red-400", "bg-red-50");
+        hasError = true;
+      } else {
+        emailField.classList.remove("border-red-400", "bg-red-50");
+      }
+
+      // Validate password
+      if (!passwordField.value) {
+        const errorMsg = passwordField.parentNode.nextElementSibling;
+        errorMsg.classList.remove("hidden");
+        passwordField.classList.add("border-red-400", "bg-red-50");
+        hasError = true;
+      } else {
+        passwordField.classList.remove("border-red-400", "bg-red-50");
+      }
+
+      if (hasError) {
+        e.preventDefault();
+      } else {
+        // Show loading state
+        loginButton.disabled = true;
+        loginButton.querySelector("span").innerText = "Logging in...";
+        loadingIcon.classList.remove("hidden");
+        loginButton.classList.add("pulse");
+      }
+    });
+
+    // Always start with light theme
     document.documentElement.classList.remove("dark");
-    lightIcon.classList.remove("hidden");
-    darkIcon.classList.add("hidden");
-    themeLabel.innerText = "Light Mode";
   });
 </script>
 {% endblock %}
